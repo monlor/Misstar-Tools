@@ -34,7 +34,7 @@ echo "开始下载安装包..."
 
 url="https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appstore/$mode"
 
-wget ${url}/misstar.mt -O /tmp/misstar.mt
+curl -kL ${url}/misstar.mt -o /tmp/misstar.mt
 
 if [ $? -eq 0 ];then
     echo "安装包下载完成！"

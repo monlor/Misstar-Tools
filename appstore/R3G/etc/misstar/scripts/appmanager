@@ -15,7 +15,7 @@ model=$(cat /proc/xiaoqiang/model)
    
 case "$1" in
 "add")
-	wget https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appstore/$model/$2.mt -O /tmp/$2.mt >/dev/null 2>&1
+	curl -kL https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appstore/$model/$2.mt -o /tmp/$2.mt >/dev/null 2>&1
 	if [ $? -ne 0 ];then
 		echo -e "1801\c"
 		exit
@@ -57,7 +57,7 @@ case "$1" in
 	sed -i "/misstar-$2/d" /etc/misstar/scripts/file_check
 	sed -i "/misstar-$2/d" /etc/misstar/scripts/Monitor
 	
-	wget https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appstore/$model/$2.mt -O /tmp/$2.mt >/dev/null 2>&1
+	curl -kL https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appstore/$model/$2.mt -o /tmp/$2.mt >/dev/null 2>&1
 	if [ $? -ne 0 ];then
 		echo -e "1804\c"
 		exit
