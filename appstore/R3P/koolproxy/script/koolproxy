@@ -1,0 +1,223 @@
+#!/bin/sh /etc/rc.common
+#---------------------------------------------------------------- 
+# Shell Name：koolproxy 
+# Description：Plug-in startup script
+# Author：Starry
+# E-mail: starry@misstar.com
+# Time：2017-04-06 02:30 CST
+# Copyright © 2016 Misstar Tools. All rights reserved.
+#----------------------------------------------------------------*/
+START=95
+SERVICE_USE_PID=1
+SERVICE_WRITE_PID=1
+SERVICE_DAEMONIZE=1
+
+. /etc/misstar/scripts/MTbase
+
+EXTRA_COMMANDS=" status  version dnsstatus dnsconfig"
+EXTRA_HELP="        status  Get shadowsocks status
+		dnsstatus  Get dns status
+        version Get Misstar Tools Version"
+koolproxy_policy=$(uci get misstar.koolproxy.mode)
+
+
+start_koolproxy(){
+	echo 开启koolproxy主进程！
+	rm -rf /etc/misstar/applications/koolproxy/bin/data/1.dat
+	rm -rf /etc/misstar/applications/koolproxy/bin/data/koolproxy.txt
+	rm -rf /etc/misstar/applications/koolproxy/bin/data/rules/1.dat
+	 [ "$koolproxy_policy" == "3" ] && EXT_ARG="-e" || EXT_ARG=""
+	cd /etc/misstar/applications/koolproxy/bin
+	./koolproxy $EXT_ARG -c 4 -d 
+}
+
+add_ipset_conf(){
+	if [ "$koolproxy_policy" == "2" ];then
+		echo 添加黑名单软连接...
+		rm -rf /tmp/etc/dnsmasq.d/koolproxy_ipset.conf
+		ln -sf /etc/misstar/applications/koolproxy/data/koolproxy_ipset.conf /tmp/etc/dnsmasq.d/koolproxy_ipset.conf
+		dnsmasq_restart=1
+	fi
+}
+
+remove_ipset_conf(){
+	if [ -L "/tmp/etc/dnsmasq.d/koolproxy_ipset.conf" ];then
+		echo 移除黑名单软连接...
+		rm -rf /tmp/etc/dnsmasq.d/koolproxy_ipset.conf
+	fi
+}
+
+restart_dnsmasq(){
+	if [ "$dnsmasq_restart" == "1" ];then
+		echo 重启dnsmasq进程...
+		/etc/init.d/dnsmasq restart > /dev/null 2>&1
+	fi
+}
+
+creat_ipset(){
+	echo 创建ipset名单
+	ipset -N white_kp_list nethash
+	ipset -N black_koolproxy iphash
+}
+
+add_white_black_ip(){
+	ip_lan="0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 127.0.0.0/8 169.254.0.0/16 172.16.0.0/12 192.168.0.0/16 224.0.0.0/4 240.0.0.0/4"
+	for ip in $ip_lan
+	do
+		ipset -A white_kp_list $ip >/dev/null 2>&1
+
+	done
+	ipset -A black_koolproxy 110.110.110.110 >/dev/null 2>&1
+}
+
+get_mode_name() {
+	case "$1" in
+		0)
+			echo "不过滤"
+		;;
+		1)
+			echo "http模式"
+		;;
+		2)
+			echo "http + https"
+		;;
+	esac
+}
+
+get_jump_mode(){
+	case "$1" in
+		0)
+			echo "-j"
+		;;
+		*)
+			echo "-g"
+		;;
+	esac
+}
+
+get_action_chain() {
+	case "$1" in
+		0)
+			echo "RETURN"
+		;;
+		1)
+			echo "KOOLPROXY_HTTP"
+		;;
+		2)
+			echo "KOOLPROXY_HTTPS"
+		;;
+	esac
+}
+
+factor(){
+	if [ -z "$1" ] || [ -z "$2" ]; then
+		echo ""
+	else
+		echo "$2 $1"
+	fi
+}
+
+flush_nat(){
+	echo 移除nat规则...
+	cd /tmp
+	iptables -t nat -S | grep -E "KOOLPROXY|KOOLPROXY_HTTP|KOOLPROXY_HTTPS" | sed 's/-A/iptables -t nat -D/g'|sed 1,3d > clean.sh && chmod 777 clean.sh && ./clean.sh && rm clean.sh
+	iptables -t nat -X KOOLPROXY > /dev/null 2>&1
+	iptables -t nat -X KOOLPROXY_HTTP > /dev/null 2>&1
+	iptables -t nat -X KOOLPROXY_HTTPS > /dev/null 2>&1
+	ipset -F black_koolproxy > /dev/null 2>&1 && ipset -X black_koolproxy > /dev/null 2>&1
+	ipset -F white_kp_list > /dev/null 2>&1 && ipset -X white_kp_list > /dev/null 2>&1
+}
+
+lan_acess_control(){
+	# lan access control
+	cat /etc/misstar/applications/koolproxy/config/LanCon.conf | awk -F ',' '{print $1}' | while read line
+	do
+		mac=$line
+		proxy_mode=$(cat /etc/misstar/applications/koolproxy/config/LanCon.conf | grep $line | awk -F ',' '{print $4}')
+		iptables -t nat -A KOOLPROXY $(factor $mac "-m mac --mac-source") -p tcp $(get_jump_mode $proxy_mode) $(get_action_chain $proxy_mode)
+	done
+}
+
+load_nat(){
+	echo 加载nat规则！
+	#----------------------BASIC RULES---------------------
+	echo 写入iptables规则到nat表中...
+	# 创建KOOLPROXY nat rule
+	iptables -t nat -N KOOLPROXY
+	# 局域网地址不走KP
+	iptables -t nat -A KOOLPROXY -m set --match-set white_kp_list dst -j RETURN
+	#  生成对应CHAIN
+	iptables -t nat -N KOOLPROXY_HTTP
+	iptables -t nat -A KOOLPROXY_HTTP -p tcp -m multiport --dport 80,82,8080 -j REDIRECT --to-ports 3000
+	iptables -t nat -N KOOLPROXY_HTTPS
+	iptables -t nat -A KOOLPROXY_HTTPS -p tcp -m multiport --dport 80,82,443,8080 -j REDIRECT --to-ports 3000
+	# 局域网控制
+	lan_acess_control
+	# 剩余流量转发到缺省规则定义的链中
+	koolproxy_acl_default_mode=$(uci get misstar.koolproxy.koolproxy_acl_default_mode)
+	[ -z "$koolproxy_acl_default_mode" ] && koolproxy_acl_default_mode=1
+	iptables -t nat -A KOOLPROXY -p tcp -j $(get_action_chain $koolproxy_acl_default_mode)
+	# 重定所有流量到 KOOLPROXY
+	# 全局模式和视频模式
+	iptablenu=$(iptables -t nat -L PREROUTING | awk '/SHADOWSOCKS/{print NR}')
+	if [ '$iptablenu' != '' ];then
+		iptablenu=`expr $iptablenu - 1`
+	else
+		iptablenu=2
+	fi
+	[ "$koolproxy_policy" == "1" ] || [ "$koolproxy_policy" == "3" ] && iptables -t nat -I PREROUTING $iptablenu -p tcp -j KOOLPROXY
+	# ipset 黑名单模式
+	[ "$koolproxy_policy" == "2" ] && iptables -t nat -I PREROUTING 2 -p tcp -m set --match-set black_koolproxy dst -j KOOLPROXY
+}
+
+dns_takeover(){
+	lan_ipaddr=$(uci get network.lan.ipaddr)
+	iptablenu=$(iptables -t nat -L PREROUTING -v -n --line-numbers|grep "dpt:53"|awk '{print $1}')
+	if [ '$iptablenu' == '' ];then
+		iptables -t nat -A PREROUTING -p udp --dport 53 -j DNAT --to $lan_ipaddr >/dev/null 2>&1
+	fi
+	
+}
+
+detect_cert(){
+	if [ ! -f /etc/misstar/applications/koolproxy/bin/data/private/ca.key.pem ]; then
+		echo 检测到首次运行，开始生成koolproxy证书，用于https过滤！
+		pwd
+		cd /etc/misstar/applications/koolproxy/bin/data && sh gen_ca.sh
+	fi
+}
+
+
+start(){
+	App_enable=$(uci get misstar.koolproxy.enable)
+	if [ "$App_enable" = '0' ];then
+		echo "KP is disable,Exiting"
+		exit
+	fi
+	detect_cert
+	start_koolproxy
+	add_ipset_conf && restart_dnsmasq
+	creat_ipset
+	add_white_black_ip
+	load_nat
+	if [ ! -f /etc/misstar/luci/download/koolproxy/ca.crt ]; then
+		mkdir /etc/misstar/luci/download/
+		mkdir /etc/misstar/luci/download/koolproxy/
+		ln -s /etc/misstar/applications/koolproxy/bin/data/certs/ca.crt /etc/misstar/luci/download/koolproxy/ca.crt
+	fi
+	dns_takeover
+	#rm -rf /tmp/user.txt && ln -sf /koolshare/koolproxy/data/user.txt /tmp/user.txt
+}
+restart(){
+	stop
+	sleep 2
+	start
+
+}
+stop(){
+	#rm -rf /tmp/user.txt
+	remove_ipset_conf && restart_dnsmasq
+	flush_nat
+	ps  |grep koolproxy | grep -v grep | grep -v {koolproxy} | grep -v restart | awk '{print $1}' | xargs kill -9
+	}
+

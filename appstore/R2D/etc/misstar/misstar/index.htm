@@ -1,0 +1,327 @@
+<%
+local model = luci.sys.exec("cat /proc/xiaoqiang/model")
+%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+	<head>
+		<%include("web/inc/head")%>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Misstar Tools - 小米路由器</title>
+		<meta name="Copyright" content="Douco Design." />
+		<meta name="viewport" content="width=1200">
+		<link href="<%=resource%>/web/css/bc.css?v=<%=ver%>" rel="stylesheet">
+		<link href="<%=resource%>/web/css/vpn.css?v=<%=ver%>" rel="stylesheet">
+		<link href="<%=resource%>/web/luci/css/misstar.css" rel="stylesheet" type="text/css">
+		<script type="text/javascript" src="<%=resource%>/web/luci/js/jquery.min.js"></script>
+		<!--<script type="text/javascript" src="<%=resource%>/web/luci/js/global.js"></script>-->
+		<!--<script type="text/javascript" src="<%=resource%>/web/luci/js/jquery.tab.js"></script>-->
+		<script type="text/javascript" src="<%=resource%>/web/luci/js/qwrap.js"></script>
+		<!--<script type="text/javascript" src="<%=resource%>/web/luci/js/lay/dest/layui.all.js"></script>-->
+		<link rel="stylesheet" href="<%=resource%>/web/luci/plugins/layui/css/layui.css" media="all" />
+		<link rel="stylesheet" href="<%=resource%>/web/luci/css/global.css" media="all">
+		<link rel="stylesheet" href="<%=resource%>/web/luci/plugins/font-awesome/css/font-awesome.min.css">
+		<!--<script type="text/javascript" src="<%=resource%>/web/luci/layer-pc/layer.js"></script>-->
+	</head>
+
+	<body>
+		<div class="layui-side " id="admin-side" style="width: 0;">
+			<div class="layui-side-scroll" id="admin-navbar-side" lay-filter="side"></div>
+		</div>
+		<%include("web/inc/header")%>
+		<!-- dcHead 结束 -->
+		<div class="layui-layout-admin" style="margin-top: 75px;">
+			<div class="layui-body" id="admin-body">
+				<div class="layui-tab admin-nav-card layui-tab-brief" lay-filter="admin-tab">
+					<ul class="layui-tab-title">
+						<li class="layui-this">
+							<i class="fa fa-dashboard" aria-hidden="true"></i>
+							<cite>Misstar Tools</cite>
+						</li>
+					</ul>
+					<div class="layui-tab-content" style="padding: 5px 0 0 0;align-items: center;height: 100%;">
+						<div class="layui-tab-item layui-show">
+							<fieldset class="layui-elem-field layui-field-title">
+								<legend>已安装插件</legend>
+								<div class="layui-field-box">
+									<div id="app-list" class="wrap">
+									</div>
+								</div>
+							</fieldset>
+							<fieldset class="layui-elem-field layui-field-title">
+								<legend>关于</legend>
+								<div class="layui-field-box">
+									<div id="sysinfo">
+									</div>
+								</div>
+							</fieldset>
+							<fieldset class="layui-elem-field layui-field-title">
+								<legend>免责声明</legend>
+								<div class="layui-field-box">
+									<pre class="layui-code">
+										<p class="cue" id="command">
+											<p>1.安装本工具箱需要开启路由器SSH功能，由此产生的任何风险、出现任何问题与本工具无关。<br>2.本工具尚在测试阶段，存在部分功能、安全漏洞，对可能产生的风险本工具不做任何承担。<br>3.本工具箱内所有工具均作学习、研究之用，禁止用于商业和非法用途，由此产生的任何后果与本工具无关。<br>4.若安装使用本工具，视为同意上述声明<br></p>
+											<p>特别感谢：<br>本工具箱内工具大部分来源于网络开源项目，特别感谢这些工具作者，包括但不限于：<br>Shadowsocks作者、阿呆喵作者、KMS作者、Aria2作者、Shellinabox作者、Vsftpd作者。<br>如果有任何侵犯您权益的地方，请邮件告知，本工具箱将即刻删除相关工具。<br>特别感谢在开发期间参与测试的群友：哲♂学、小白、无痕、告别(了)突然、int</p>
+										
+									</pre>
+								</div>
+							</fieldset>
+							<div id="footer" style="text-align: center;">
+								<div class="line"></div>
+								<ul>
+									版权所有 © 2013-2017
+									<a href="http://www.misstar.com">Misstar Studio</a>，并保留所有权利。
+								</ul>
+							</div>
+						</div>
+
+					</div>
+				</div>
+			</div>
+			<script type="text/javascript" src="/xiaoqiang/web/luci/plugins/layui/layui.js"></script>
+			<script src="/xiaoqiang/web/luci/js/index.js"></script>
+			<script type="tmpl/html" id="tplapplist">
+				{if($applist.length > 0)} {for(var i=0; i
+				< $applist.length; i++)} <div class="box site-demo-active" data-type="{$applist[i].href}">
+					<img src="<%=resource%>/web/luci/img/{$applist[i].icon}.png">
+					<p>{$applist[i].title}</p>
+		</div>
+		{/for} {else}
+		<tr>
+			<td colspan="2" class="center">没有设置信息</td>
+		</tr>
+		{/if}
+		</script>
+
+		<script type="tmpl/html" id="tmpsysinfo">
+			<div class="layui-form-item">
+				<div class="layui-inline">
+					<label class="layui-form-label">版本：</label>
+					<div class="layui-form-mid">{$version}</div>
+					<div class="box site-demo-active" style="top: 15px;float: left;">
+						<a style="display: none;float: left;" id="upgrade" href="javascript:;" class="layui-btn layui-btn-normal  layui-btn-small" onclick="upgrade();">升级</a>
+					</div>
+				</div>
+			</div>
+
+			<div class="layui-form-item">
+				<div class="layui-inline">
+					<label class="layui-form-label">QQ群：</label>
+					<div class="layui-form-mid">
+						<a target="_blank" href="http://shang.qq.com/wpa/qunwpa?idkey=4d98dcf63441cd34accd7f38c04657ab05895620976efd3cf86de551b5be16ea"><img border="0" src="http://pub.idqqimg.com/wpa/images/group.png" alt="小米路由插件交流" title="小米路由插件交流"></a>
+						<a target="_blank" href="http://shang.qq.com/wpa/qunwpa?idkey=dff6dc69cd2e3f9e859b566e448baa98d1add033691a6d35d57d3175e727fb0d"><img border="0" src="http://pub.idqqimg.com/wpa/images/group.png" alt="小米路由插件交流" title="小米路由插件交流"></a>
+					</div>
+				</div>
+			</div>
+			<div class="layui-form-item">
+				<div class="layui-inline">
+					<label class="layui-form-label">安装统计：</label>
+					<div class="layui-form-mid">您是第<b>{$counter}</b>位安装本工具箱用户，共<b>{$countersum}</b>位用户安装了本工具箱，安装应用<b>{$appcounter}</b>次。<a href="javascript:;" onclick="uninstall();" style="color: red;"><b>卸载工具箱</b></a></div>
+				</div>
+			</div>
+		</script>
+
+		<script>
+			layui.config({
+				base: '/xiaoqiang/web/luci/js/'
+			}).use(['element', 'layer', 'navbar', 'tab'], function() {
+				var element = layui.element(),
+					$ = layui.jquery,
+					layer = layui.layer,
+					navbar = layui.navbar(),
+					tab = layui.tab({
+						elem: '.admin-nav-card' //设置选项卡容器
+							,
+						beforeClose: function(elem) {
+							if(elem == 'webshell') {
+								var xhr = $.getJSON('../../api/misstar/off_webshell', {}, function(rsp) {
+									if(rsp.code != 0) {
+										console.log(rsp.msg);
+									}
+								});
+							}
+						}
+					});
+
+				var tpl = $('#tplapplist').html();
+				tpldata = [];
+				var navs = $.getJSON('/xiaoqiang/web/luci/js/nav.json', {}, function(navs) {
+					if(navs[0].children.length > 0) {
+						var list = {};
+						var icon;
+						$.ajax({
+							url: "http://www.misstar.com/tools/appstore/<%=model%>/applist.php",
+							jsonp: 'callback',
+							dataType: 'jsonp',
+							data: '',
+							timeout: 500,
+							success: function(rsp) {
+								if(rsp.code == 0) {
+									list = rsp.applist;
+									for(var i = 0; i < navs[0].children.length; i++) {
+										for(var j = 0; j < list.length; j++) {
+											icon = navs[0].children[i].href;
+											if(navs[0].children[i].href == list[j].href) {
+												if(navs[0].children[i].version < list[j].version) {
+													icon = navs[0].children[i].href + "_ua";
+												}
+												break;
+											}
+										}
+										var item = {
+											title: navs[0].children[i].title,
+											href: navs[0].children[i].href,
+											icon: icon
+										}
+										tpldata.push(item);
+									}
+									$('#app-list').html(tpl.tmpl({
+										applist: tpldata
+									}));
+									$(".box").each(function() {
+										$(this).click(function() {
+											var val = $(this).attr('data-type');
+
+											var data = navs[0].children;
+											for(var o in data) {
+												if(data[o].href == val) {
+													tab.tabAdd(data[o]);
+												}
+											}
+										});
+									});
+								}
+							},
+							error: function(e) {
+
+								for(var i = 0; i < navs[0].children.length; i++) {
+									icon = navs[0].children[i].href;
+									var item = {
+										title: navs[0].children[i].title,
+										href: navs[0].children[i].href,
+										icon: icon
+									}
+									tpldata.push(item);
+								}
+								$('#app-list').html(tpl.tmpl({
+									applist: tpldata
+								}));
+								$(".box").each(function() {
+									$(this).click(function() {
+										var val = $(this).attr('data-type');
+
+										var data = navs[0].children;
+										for(var o in data) {
+											if(data[o].href == val) {
+												tab.tabAdd(data[o]);
+											}
+										}
+									});
+								});
+
+							}
+						});
+
+					}
+
+					return navs;
+				});
+
+				xhr = $.getJSON('<%=luci.dispatcher.build_url("api", "misstar", "get_status")%>', {}, function(rsp) {
+					if(rsp.code == 0) {
+						var tpl = $('#tmpsysinfo').html();
+						var tpldata = {
+							version: '',
+							counter: '',
+							cputmp: '',
+							boardtmp: '',
+							fanspeed: '',
+							countersum: '',
+							appcounter: ''
+						};
+						tpldata.version = rsp.version;
+						tpldata.counter = rsp.counter;
+						tpldata.cputmp = rsp.cputmp;
+						tpldata.boardtmp = rsp.boardtmp;
+						tpldata.fanspeed = rsp.fanspeed;
+						$.ajax({
+							url: "http://www.misstar.com/tools/appcountersum.php",
+							jsonp: 'callback',
+							dataType: 'jsonp',
+							data: '',
+							timeout: 2000,
+							success: function(rsp) {
+								tpldata.appcounter = rsp.counter;
+							},
+							error: function(e) {
+								tpldata.appcounter = 0;
+							}
+						});
+
+						$.ajax({
+							url: "http://www.misstar.com/tools/countersum.php",
+							jsonp: 'callback',
+							dataType: 'jsonp',
+							data: '',
+							timeout: 2000,
+							success: function(rsp) {
+								tpldata.countersum = rsp.counter;
+							},
+							error: function(e) {
+								tpldata.countersum = 0;
+							}
+						});
+
+						setTimeout(function() {
+							$('#sysinfo').html(tpl.tmpl(tpldata));
+							version = rsp.version;
+							$.ajax({
+								url: "http://www.misstar.com/tools/appstore/<%=model%>/misstar.php",
+								jsonp: 'callback',
+								dataType: 'jsonp',
+								data: 'rm',
+								timeout: 2000,
+								success: function(rsp) {
+									lastversion = rsp.lastversion;
+									if(version < lastversion) {
+										document.getElementById("upgrade").style.display = "block";
+									}
+								}
+							});
+						}, 1000);
+
+					}
+
+				});
+
+			});
+
+			function upgrade() {
+				var index = layer.load(0, {
+					shade: [0.2, '#393D49']
+				});
+				$.getJSON('<%=luci.dispatcher.build_url("api","misstar","update")%>', {}, function(rsp) {
+					if(rsp.code == 0) {
+						parent.location.reload();
+						parent.layer.close(index);
+					} else {
+						$.alert(rsp.msg);
+						parent.layer.close(index);
+					}
+				});
+			}
+
+			function uninstall() {
+				var index = layer.load(0, {
+					shade: [0.2, '#393D49']
+				});
+				$.getJSON('<%=luci.dispatcher.build_url("api","misstar","uninstall")%>', {}, function(rsp) {
+					window.location.href = '../../';
+				});
+			}
+		</script>
+		</div>
+		<%include("web/inc/footer")%>
+	</body>
+
+	</html>

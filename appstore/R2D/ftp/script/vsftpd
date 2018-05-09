@@ -1,0 +1,153 @@
+#!/bin/sh /etc/rc.common
+#---------------------------------------------------------------- 
+# Shell Name：vsfptd
+# Description：Plug-in startup script
+# Author：Starry
+# E-mail: starry@misstar.com
+# Time：2016-11-06 02:30 CST
+# Copyright © 2016 Misstar Tools. All rights reserved.
+#----------------------------------------------------------------*/
+START=50
+. /etc/misstar/scripts/MTbase
+EXTRA_COMMANDS=" status  version pathcheck add del"
+EXTRA_HELP="        status  Get shadowsocks status
+        version Get Misstar Tools Version"
+
+	
+appname=ftp
+ftp_getconfig() {
+	MTlog 1 "Starting vsftpd service..."
+	MTlog 1 "Load root access setting"
+	root_enable=$(uci get misstar.$appname.root_enable)
+	if [ "$root_enable" = '1' ];then
+		echo "root" >> /etc/vsftpd.users
+	else
+		touch /etc/vsftpd.users
+		sed -i "/root/"d /etc/vsftpd.users
+	fi
+	cat /etc/misstar/applications/ftp/config/userlist.conf >> /etc/vsftpd.users
+	MTlog 1 "Load anonymous access setting"
+	
+	anonymous_enable=$(uci get misstar.$appname.any_enable)
+	if [ "$anonymous_enable" = '1' ];then
+		anonymous_enable=YES
+	else
+		anonymous_enable=NO
+	fi
+	
+	MTlog 1 "Load write enable setting"
+	write_enable=$(uci get misstar.$appname.write_enable)
+	if [ "$write_enable" = '1' ];then
+		write_enable=YES
+	else
+		write_enable=NO
+	fi
+	
+	MTlog 1 "Load chroot setting"
+	chroot=$(uci get misstar.$appname.chroot)
+	if [ "$chroot" = '1' ];then
+		chroot=YES
+	else
+		chroot=NO
+	fi
+	
+	MTlog 1 "Load log setting"
+	xferlog_enable=$(uci get misstar.$appname.log_enable)
+	if [ "$xferlog_enable" = '1' ];then
+		xferlog_enable=YES
+	else
+		xferlog_enable=NO
+	fi
+	
+	MTlog 1 "Load port setting"
+	ftp_port=$(uci get misstar.$appname.ftp_port)
+	if [ "$ftp_port" == '' ]; then
+		ftp_port=21
+	fi
+	
+	rm_enable=$(uci get misstar.$appname.rm_enable)
+	if [ "$rm_enable" == '1' ];then
+		MTlog 1 "Add iptables rules for remote access."
+		iptables -I INPUT -p tcp --dport $ftp_port -j ACCEPT -m comment --comment "misstar-vsftpd"
+	fi
+	
+	cp -rf /etc/misstar/applications/ftp/config/vsftpd.conf /etc/vsftpd.conf
+	echo -e '\nanonymous_enable='$anonymous_enable'\nchroot_local_user='$chroot'\nlisten_port='$ftp_port'\nwrite_enable='$write_enable'\nxferlog_enable='$xferlog_enable'\n' >> /etc/vsftpd.conf
+}
+								
+
+start() {
+	vsftpd_enable=$(uci get misstar.$appname.enable)
+	if [ "$vsftpd_enable" = '0' ];then
+		echo "service vsftpd is disabeld!"
+		exit
+	fi
+	
+	AreadyRunning=$(ps | grep vsftpd | grep -v grep | grep -v script | grep -v '{' | wc -l)
+	if [ "$AreadyRunning" != '0' ];then
+		echo "vsftpd is aleady running,Exit..."
+		MTlog 1 "vsftpd is aleady running,Exit..."
+		ps | grep vsftpd > /tmp/Misstar.log
+		exit
+	fi
+	ftp_getconfig
+	mkdir -m 0755 -p /var/run/vsftpd
+	service_start /etc/misstar/applications/ftp/bin/vsftpd
+	MTlog 1 "Done!"
+}
+
+stop() {
+	MTlog 1 "Stopping vsftpd service"
+	service_stop /etc/misstar/applications/ftp/bin/vsftpd
+	rm -rf /etc/vsftpd*
+	iptables -D INPUT -p tcp --dport 21 -j ACCEPT -m comment --comment "misstar-vsftpd" &> /dev/null
+	MTlog 1 "Done!"
+}
+
+status() {
+	status=`ps | grep vsftpd | grep -v grep | wc -l`
+	if [ "$status" = '2' ];then
+		echo "service vsftpd is not running"
+	else
+		echo "service vsftpd is running"
+	fi
+}
+
+
+restart() {
+	MTlog 1 "Restarting vsftpd service..."
+    stop;sleep 2;start
+}
+
+
+pathcheck(){
+	if [ ! -d "$1" ]; then 
+		echo -e "0\c"
+	else
+		echo -e "1\c"
+	fi 
+}
+
+add(){
+	sed -i "/$1/"d /etc/passwd
+	sed -i "/$1/"d /etc/shadow
+	if [ "$4" == '0' ]; then
+		sshlogin=/bin/false;
+	else
+		sshlogin=/bin/ash;
+	fi
+	if [ ! -d "$3" ]; then 
+		mkdir $3
+	fi 
+	echo "$1:*:10086:10086:$1:$3:$sshlogin" >> /etc/passwd
+	echo "$1:*:0:0:99999:7:::" >> /etc/shadow
+	echo -e "$2\n$2" | passwd $1
+	echo $1 >> /etc/misstar/applications/ftp/config/userlist.conf
+}
+del(){
+	sed -i "/^$1/"d /etc/passwd
+	sed -i "/^$1/"d /etc/shadow
+	sed -i "/^$1/"d /etc/misstar/applications/ftp/config/userlist.conf
+}
+
+

@@ -1,0 +1,15 @@
+#!/bin/ash
+#---------------------------------------------------------------- 
+# Shell Name：Dayjob
+# Description：Dayjob script
+# Author：Starry
+# E-mail: starry@misstar.com
+# Time：2016-11-06 02:30 CST
+# Copyright © 2016 Misstar Tools. All rights reserved.
+#----------------------------------------------------------------*/
+
+START=99
+STOP=99
+. /etc/misstar/scripts/MTbase
+
+#检查重启服务

@@ -1,0 +1,9 @@
+#misstar-aria2
+App_enable=$(uci get misstar.aria2.enable) #misstar-aria2
+if [ "$App_enable" = '1' ];then #misstar-aria2
+	result=$(ps | grep aria2c | grep -v grep | grep -v script | wc -l) #misstar-aria2
+	if [ "$result" == "0" ]; then #misstar-aria2
+		MTlog 3 "Aria2 Process state Error,Try to restart it..." #misstar-aria2
+		/etc/misstar/applications/aria2/script/aria2 restart #misstar-aria2
+	fi #misstar-aria2
+fi #misstar-aria2

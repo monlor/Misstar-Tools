@@ -1,0 +1,33 @@
+#!/bin/sh /etc/rc.common
+#---------------------------------------------------------------- 
+# Shell Name：webshell 
+# Description：Plug-in startup script
+# Author：Starry
+# E-mail: starry@misstar.com
+# Time：2016-11-06 02:30 CST
+# Copyright © 2016 Misstar Tools. All rights reserved.
+#----------------------------------------------------------------*/
+START=99
+. /etc/misstar/scripts/MTbase
+EXTRA_COMMANDS=" status  version"
+EXTRA_HELP="        status  Get shadowsocks status
+        version Get Misstar Tools Version"
+
+
+start() {
+    MTlog 1 "Starting webshell service ..."
+    service_start /etc/misstar/applications/webshell/bin/shellinaboxd -p 10085 -s /:LOGIN -u root -b 
+    iptables -I INPUT -p tcp --dport 10085 -j ACCEPT -m comment --comment "misstar-webshell"
+    MTlog 1 "Done!"
+    echo -e "0\c"
+}
+stop() {
+    MTlog 1 "Stopping webshell service ..."
+    killall -9 shellinaboxd
+	iptables -D INPUT -p tcp --dport 10085 -j ACCEPT -m comment --comment "misstar-webshell" &> /dev/null
+    MTlog 1 "Done!"
+}
+restart() {
+	MTlog 1 "Retarting webshell service ..."
+    stop;sleep 2;start
+}

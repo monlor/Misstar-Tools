@@ -1,0 +1,34 @@
+[{
+	"title": "Misstar Tools",
+	"icon": "fa-cubes",
+	"spread": true,
+	"children": [{
+		"title": "Shadowsocks",
+		"icon": "&#xe641;",
+		"href": "ss"
+	}, {
+		"title": "远程管理",
+		"icon": "&#xe63c;",
+		"href": "rm"
+	}, {
+		"title": "webshell",
+		"icon": "&#xe63c;",
+		"href": "webshell"
+	}, {
+		"title": "VSFTP服务器",
+		"icon": "&#xe609;",
+		"href": "ftp"
+	}, {
+		"title": "阿呆喵",
+		"icon": "&#xe62a;",
+		"href": "adm"
+	}, {
+		"title": "Aria2",
+		"icon": "&#xe60c;",
+		"href": "aria2"
+	},{
+		"title": "KMS服务器",
+		"icon": "fa-table",
+		"href": "kms"
+	}]
+}]

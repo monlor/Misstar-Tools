@@ -1,0 +1,21 @@
+#misstar-rm
+App_enable=$(uci get misstar.rm.web_enable) #misstar-rm
+if [ "$App_enable" = '1' ];then #misstar-rm
+	result=$(iptables -L | grep 'misstar-web ' | wc -l) #misstar-rm
+	if [ "$result" == "0" ]; then #misstar-rm
+		MTlog 3 "Remote WEB Access Process state Error,Try to restart it..." #misstar-rm
+		/etc/misstar/applications/rm/script/rm web disable #misstar-rm
+		/etc/misstar/applications/rm/script/rm web enable #misstar-rm
+	fi #misstar-rm
+fi #misstar-rm
+ #misstar-rm
+App_enable=$(uci get misstar.rm.sshd_enable) #misstar-rm
+if [ "$App_enable" = '1' ];then #misstar-rm
+	ssh_port=$(uci get misstar.rm.sshd_port) #misstar-rm
+	result=$(iptables -L | grep 'misstar-sshd' | grep $ssh_port | wc -l) #misstar-rm
+	if [ "$result" == "0" ]; then #misstar-rm
+		MTlog 3 "Remote WEB Access Process state Error,Try to restart it..." #misstar-rm
+		/etc/misstar/applications/rm/script/rm sshd disable #misstar-rm
+		/etc/misstar/applications/rm/script/rm sshd enable #misstar-rm
+	fi #misstar-rm
+fi #misstar-rm

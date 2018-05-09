@@ -1,0 +1,14 @@
+#misstar-pptpd
+App_enable=$(uci get misstar.pptpd.enable) #misstar-pptpd
+if [ "$App_enable" = '1' ];then #misstar-pptpd
+	result=$(ps | grep pptpd | grep -v grep | grep -v pppd | grep -v pptpctrl | wc -l) #misstar-pptpd
+	if [ "$result" == "0" ]; then #misstar-pptpd
+		MTlog 3 "PPTPD Process state Error,Try to restart it..." #misstar-pptpd
+		/etc/misstar/applications/pptpd/script/pptpd restart #misstar-pptpd
+	fi #misstar-pptpd
+	result=$(iptables -L | grep misstar-pptp | wc -l) #misstar-pptpd
+	if [ "$result" == "0" ]; then #misstar-pptpd
+		MTlog 3 "PPTPD Process state Error,Try to restart it..." #misstar-pptpd
+		/etc/misstar/applications/pptpd/script/pptpd restart #misstar-pptpd
+	fi #misstar-pptpd
+fi #misstar-pptpd

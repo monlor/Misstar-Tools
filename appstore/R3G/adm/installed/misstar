@@ -1,0 +1,4 @@
+config config 'adm'
+	option version '1.0.0'
+	option mode 'videomode'
+	option enable '0'

@@ -1,0 +1,17 @@
+#misstar-kms
+App_enable=$(uci get misstar.kms.enable) #misstar-kms
+if [ "$App_enable" = '1' ];then #misstar-kms
+	result=$(ps | grep kms | grep -v grep | wc -l) #misstar-kms
+	if [ "$result" == "0" ]; then #misstar-kms
+		MTlog 3 "kms Process state Error,Try to restart it..." #misstar-kms
+		/etc/misstar/applications/kms/script/kms restart #misstar-kms
+	fi #misstar-kms
+	result=$(uci get misstar.kms.kms_wan) #misstar-kms
+	if [ "$result" == '1' ]; then #misstar-kms
+		result=$(iptables --list | grep misstar-kms | wc -l) #misstar-kms
+		if [ "$result" == "0" ]; then #misstar-kms
+			MTlog 3 "KMS Process state Error,Try to restart it..." #misstar-kms
+			/etc/misstar/applications/kms/script/kms restart #misstar-kms
+		fi #misstar-kms
+	fi #misstar-kms
+fi #misstar-kms

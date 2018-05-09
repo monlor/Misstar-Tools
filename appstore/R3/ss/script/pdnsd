@@ -1,0 +1,57 @@
+#!/bin/sh /etc/rc.common
+#---------------------------------------------------------------- 
+# Shell Name：pdnsd 
+# Description：Plug-in startup script
+# Author：Starry
+# E-mail: starry@misstar.com
+# Time：2016-11-06 02:30 CST
+# Copyright © 2016 Misstar Tools. All rights reserved.
+#----------------------------------------------------------------*/
+START=65
+. /etc/misstar/scripts/MTbase
+DAEMON=/etc/misstar/applications/ss/bin/pdnsd
+PID_FILE=/var/run/$NAME.pid
+CACHEDIR=/var/pdnsd
+CONFIGPATH=/etc/misstar/applications/ss/config/pdnsd.conf
+TMPCONFIG=/tmp/pdnsd.conf
+CACHE=$CACHEDIR/pdnsd.cache
+
+USER=root
+GROUP=root
+
+start() {
+       MTlog 1 "Starting pdnsd service..."
+       gen_cache
+       rm -rf $TMPCONFIG
+       dns_server=$(uci get misstar.ss.dns_server)
+       dns_port=$(uci get misstar.ss.dns_port)
+       cp -rf $CONFIGPATH $TMPCONFIG
+       echo -e 'server {\nlabel="Misstar Dns";\nip='$dns_server';\nport='$dns_port';\nuptest= none;\n}' > /tmp/pdnsd.tmp
+       sed -i '/Misstar-pdnsd/r /tmp/pdnsd.tmp' $TMPCONFIG
+       $DAEMON --daemon -p $PID_FILE -c $TMPCONFIG
+       MTlog 1 "Done!"
+}
+
+stop() {
+       MTlog 1 "Stopping pdnsd service..."
+       killall pdnsd
+       rm -rf $PID_FILE
+       MTlog 1 "Done!"
+}
+
+restart() {
+       MTlog 1 "Restarting pdnsd service "
+       stop
+       sleep 2
+       start
+}
+
+gen_cache()
+{
+       if ! test -f "$CACHE"; then
+               mkdir -p `dirname $CACHE`
+               dd if=/dev/zero of="$CACHE" bs=1 count=4 2> /dev/null
+               chown -R $USER.$GROUP $CACHEDIR
+       fi
+}
+                                                

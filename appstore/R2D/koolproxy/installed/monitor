@@ -1,0 +1,10 @@
+#misstar-koolproxy
+App_enable=$(uci get misstar.koolproxy.enable) #misstar-koolproxy
+if [ "$App_enable" = '1' ];then #misstar-koolproxy
+	result1=$(ps | grep koolproxy | grep -v grep | grep -v script | wc -l) #misstar-koolproxy
+	result2=$(iptables -L -t nat  | grep KOOLPROXY | wc -l) #misstar-koolproxy
+	if [ "$result1" == "0" ] || [ "$result2" == "0" ]; then #misstar-koolproxy
+		MTlog 3 "KoolProxy Process state Error,Try to restart it..." #misstar-koolproxy
+		/etc/misstar/applications/koolproxy/script/koolproxy restart #misstar-koolproxy
+	fi #misstar-koolproxy
+fi #misstar-koolproxy

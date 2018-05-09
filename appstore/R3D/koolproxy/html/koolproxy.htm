@@ -1,0 +1,415 @@
+<%
+local model = luci.sys.exec("cat /proc/xiaoqiang/model")
+%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+	<head>
+		<%include("web/inc/head")%>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Misstar Tools - 小米路由器</title>
+		<meta name="Copyright" content="Douco Design." />
+		<meta name="viewport" content="width=1200">
+		<!--<link href="<%=resource%>/web/luci/css/public.css" rel="stylesheet" type="text/css">-->
+		<script type="text/javascript" src="<%=resource%>/web/luci/js/jquery.min.js"></script>
+		<!--<script type="text/javascript" src="<%=resource%>/web/luci/js/global.js"></script>-->
+		<!--<script type="text/javascript" src="<%=resource%>/web/luci/js/jquery.tab.js"></script>-->
+		<script type="text/javascript" src="<%=resource%>/web/luci/js/qwrap.js"></script>
+		<script type="text/javascript" src="<%=resource%>/web/luci/js/jbase64.js"></script>
+		<link rel="stylesheet" href="<%=resource%>/web/luci/plugins/layui/css/layui.css" media="all" />
+		<link rel="stylesheet" href="<%=resource%>/web/luci/css/global.css" media="all">
+		<link rel="stylesheet" href="<%=resource%>/web/luci/plugins/font-awesome/css/font-awesome.min.css">
+		<link rel="stylesheet" href="<%=resource%>/web/luci/plugins/layui/css/layui.css" media="all" />
+		<script type="text/javascript" src="<%=resource%>/web/luci/layer-pc/layer.js"></script>
+		<link rel="stylesheet" href="<%=resource%>/web/luci/plugins/font-awesome/css/font-awesome.min.css">
+	</head>
+
+	<body onload="init();" style="background: white;">
+		<fieldset class="layui-elem-field">
+			<legend>KoolProxy</legend>
+			<div class="layui-field-box">
+				<div id="ftp_body">
+				</div>
+				<fieldset class="layui-elem-field layui-field-title">
+					<legend>局域网控制</legend>
+					<div class="layui-field-box">
+						<table class="site-table table-hover">
+							<thead>
+								<tr>
+									<th width="20%">主机名</th>
+									<th width="20%">IP</th>
+									<th width="20%">MAC</th>
+									<th>广告过滤</th>
+									<th>操作</th>
+								</tr>
+							</thead>
+							<tbody id='lanconlist'>
+								<tr>
+									<td class="center" colspan="5">
+										<%:查询中....%>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</fieldset>
+				<fieldset class="layui-elem-field layui-field-title">
+					<legend>说明</legend>
+					<div class="layui-field-box">
+						<pre class="layui-code">
+										<p class="cue" id="command">
+											<p>特别说明：<br>本插件移植自梅林固件同名Koolproxy插件，版权归原作者所有，请勿用于任何非法用途！</p>
+											<p>使用说明：<br>1 第一次运行的时候需要生成证书，启动时间较长（约1分钟），请生成完成后再下载证书。<br>2  如果你为某台主机启用了https过滤，请一定记得为这台机器安装证书。<br>3  在路由器下的设备，不管是电脑，还是移动设备，都可以在浏览器中输入110.110.110.110来下载证书。</p>
+											<p>规则更新：<br>从主程序3.4版本（对应本插件1.0.4）开始，不支持插件订阅，主程序和过滤规则会每个小时检查更新一次。</p>
+						</pre>
+					</div>
+				</fieldset>
+			</div>
+		</fieldset>
+		<div id="footer" style="text-align: center;">
+			<div class="line"></div>
+			<ul>
+				版权所有 © 2013-2017
+				<a href="http://www.misstar.com">Misstar Studio</a>，并保留所有权利。
+			</ul>
+		</div>
+		<script type="tmpl/html" id="ftpbody">
+			<fieldset class="layui-elem-field layui-field-title">
+				<legend>工作状态</legend>
+				<div class="layui-field-box">
+					<div class="layui-form-item">
+						<div class="layui-inline">
+							<label class="layui-form-label">插件版本</label>
+							<div class="layui-form-mid layui-word-aux" id="version">{$version}
+							</div>
+							<div class="box site-demo-active" style="top: 15px;float: left;display: none;" id="upgrade">
+								<a href="javascript:;" style="top: 15px;" class="layui-btn layui-btn-normal  layui-btn-small" onclick="upgrade();">升级</a>
+							</div>
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<div class="layui-inline">
+							<label class="layui-form-label">运行状态</label>
+							<div class="layui-form-mid layui-word-aux" id="koolproxy_status">{$koolproxy_status}
+							</div>
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<div class="layui-inline">
+							<label class="layui-form-label">视频规则</label>
+							<div class="layui-form-mid layui-word-aux" id="v_update_date">【{$v_update_date}】
+							</div>
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<div class="layui-inline">
+							<label class="layui-form-label">静态规则</label>
+							<div class="layui-form-mid layui-word-aux" id="s_update_date">【{$s_update_date}】
+							</div>
+						</div>
+					</div>
+				</div>
+			</fieldset>
+
+			<fieldset class="layui-elem-field layui-field-title">
+				<legend>设置</legend>
+				<div class="layui-field-box">
+					<form class="layui-form" method="POST" name="rm" id="rm">
+						<div class="layui-form-item">
+							<label class="layui-form-label">开启KoolProxy</label>
+							<div class="layui-input-block">
+								<input type="checkbox" name="enable" id="enable" title="开启" {if($disabled=='1' )}disabled="true" {/if}{if($enable=='1' )}checked="true" {/if}>
+								<span {if($disabled=='0' )}style="display: none;" {else}style="color: red;" {/if}>当前SS模式为全局，KP无法启用。</span>
+							</div>
+						</div>
+						<div class="layui-form-item">
+
+							<label class="layui-form-label">工作模式</label>
+							<div class="layui-input-inline">
+								<select name="koolproxy_mode" lay-filter="koolproxy_mode">
+									<option value="2" {if($mode=='2' )}selected="selected" {/if}>黑名单模式</option>
+									<option value="3" {if($mode=='3' )}selected="selected" {/if}>视频模式</option>
+									<option value="1" {if($mode=='1' )}selected="selected" {/if}>全局模式</option>
+								</select>
+							</div>
+						</div>
+
+						<div class="layui-form-item">
+
+							<label class="layui-form-label">证书下载</label>
+							<div class="layui-input-block">
+								<input type="button" value="证书下载" class="layui-btn  layui-btn-primary" onclick="window.open('<%=resource%>/web/luci/download/koolproxy/ca.crt')" />
+								<input type="button" value="https使用教程" class="layui-btn  layui-btn-primary" onclick="window.open('http://koolshare.cn/thread-80430-1-1.html')" />
+
+							</div>
+						</div>
+
+						<div class="layui-form-item">
+							<div class="layui-input-block">
+								<button class="layui-btn" lay-submit="" lay-filter="demo1">立即提交</button>
+								<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+							</div>
+						</div>
+					</form>
+				</div>
+			</fieldset>
+
+		</script>
+		<script type="tmpl/html" id="tpllanconlist">
+			<tr>
+				<td>
+					<select name="hostname" lay-filter="hostname" id="hostname" onclick="loaddevlist();">
+						<option value="0">请选择设备</option>
+					</select>
+				</td>
+				<td><span id="hostip"></span></td>
+				<td><span id="hostmac"></span></td>
+				<td>
+					<select name="mode" lay-filter="mode" id="add">
+						<option value="0">不过滤</option>
+						<option value="1">HTTP Only</option>
+						<option value="2">HTTP + HTTPS</option>
+					</select>
+				</td>
+				<td align="center">
+					<a href="javascript:;" class="layui-btn layui-btn-normal layui-btn-mini" data-type="submit" data-id="add">添加</a>
+				</td>
+			</tr>
+
+			{if($lanconlist.length > 0)} {for(var i=0; i
+			< $lanconlist.length; i++)} <tr>
+				<td>{$lanconlist[i].name}</td>
+				<td>{$lanconlist[i].ip}</td>
+				<td>{$lanconlist[i].mac}</td>
+				<td>
+					<select name="mode" id={$lanconlist[i].mac} lay-filter="mode">
+						<option value="0" {if($lanconlist[i].mode=="0" )}selected="selected" {/if}>不过滤</option>
+						<option value="1" {if($lanconlist[i].mode=="1" )}selected="selected" {/if}>HTTP Only</option>
+						<option value="2" {if($lanconlist[i].mode=="2" )}selected="selected" {/if}>HTTP + HTTPS</option>
+					</select>
+				</td>
+				<td align="center">
+					<a href="javascript:;" class="layui-btn layui-btn-normal layui-btn-mini" data-type="submit" data-id={$lanconlist[i].mac}>提交</a>
+					<a href="javascript:;" class="layui-btn layui-btn-danger layui-btn-mini" data-type="delete" data-id={$lanconlist[i].mac}>删除</a>
+				</td>
+				</tr>
+				{/for} {/if}
+
+				<tr>
+					<td>缺省规则</td>
+					<td>缺省规则</td>
+					<td>缺省规则</td>
+					<td>
+						<select name="mode" lay-filter="mode" id="default">
+							<option value="0" {if($lanconlist.koolproxy_acl_default_mode=='0' )}selected="selected" {/if}>不过滤</option>
+							<option value="1" {if($lanconlist.koolproxy_acl_default_mode=='1' )}selected="selected" {/if}>HTTP Only</option>
+							<option value="2" {if($lanconlist.koolproxy_acl_default_mode=='2' )}selected="selected" {/if}>HTTP + HTTPS</option>
+						</select>
+					</td>
+					<td align="center">
+						<a href="javascript:;" class="layui-btn layui-btn-normal layui-btn-mini" data-type="submit" data-id="default">提交</a>
+					</td>
+				</tr>
+		</script>
+		<script type="text/javascript" src="<%=resource%>/web/luci/plugins/layui/layui.js"></script>
+		<script>
+			layui.use(['form', 'layedit', 'laydate'], function() {
+				var form = layui.form(),
+					layer = layui.layer,
+					layedit = layui.layedit,
+					laydate = layui.laydate;
+
+				//创建一个编辑器
+				var editIndex = layedit.build('LAY_demo_editor');
+
+				//监听提交
+				form.on('submit(demo1)', function(data) {
+					var url = this.action,
+						method = this.method,
+						param = $(this).serialize(),
+						formName = this.name;
+					var index = parent.layer.load(0, {
+						shade: [0.2, '#393D49 ']
+					});
+					data.field.enable == 'on' ? data.field.enable = 1 : data.field.enable = 0;
+					var xhr = $.getJSON('<%=luci.dispatcher.build_url("api", "misstar", "set_koolproxy")%>', data.field, function(rsp) {});
+					setTimeout(function() {
+						parent.layer.close(index);
+						location.reload();
+					}, 1000);
+					return false;
+				});
+				form.on('select(koolproxy_mode)', function(data) {
+					mode = data.value;
+					switch(mode) {
+						case "1":
+							data = "效果最好，路由器负荷最高";
+							break;
+						case "2":
+							data = "加载视频和静态规则，效果不及全局模式";
+							break;
+						case "3":
+							data = "只针对视频进行过滤。";
+							break;
+					}
+					layer.tips(data, "#koolproxy_mode");
+				});
+			});
+		</script>
+	</body>
+	<script>
+		function upgrade() {
+			var index = parent.layer.load(0, {
+				shade: [0.2, '#393D49']
+			});
+			var str = window.location.href;
+			id = str.substr(str.lastIndexOf("/") + 1);
+			$.getJSON('<%=luci.dispatcher.build_url("api","misstar","appstore")%>', {
+				id: id,
+				operate: 'upgrade'
+			}, function(rsp) {
+				if(rsp.code == 0) {
+					location.reload();
+					parent.layer.close(index);
+				} else {
+					$.alert(rsp.msg);
+					parent.layer.close(index);
+				}
+			});
+		}
+
+		function loaddevlist() {
+			if(hostlist.length > 0) {
+				mac = $('#hostname option:selected').val();
+				for(var i = 0; i < hostlist.length; i++) {
+					if(hostlist[i].mac == mac) {
+						document.getElementById("hostip").innerHTML = hostlist[i].ip;
+						document.getElementById("hostmac").innerHTML = mac;
+					}
+				}
+			} else {
+				alert("获取设备信息失败或所有设备均已配置或没有设备连接到路由器。");
+			}
+		}
+
+		function bottonclick(datatype, id) {
+			if(typeof(id) != "undefined") {
+				var obj = document.getElementById(id);
+				var index = obj.selectedIndex;
+				mode = obj.options[index].value;
+				if(id == "add") {
+					id = $('#hostmac').text();
+					if(id == '') {
+						alert("请选择要添加的设备！");
+						return 0;
+					}
+				}
+				var index = parent.layer.load(0, {
+					shade: [0.2, '#393D49']
+				});
+				$.getJSON('<%=luci.dispatcher.build_url("api","misstar","set_lancon")%>', {
+					mac: id,
+					mode: mode,
+					opt: datatype
+				}, function(rsp) {
+					if(rsp.code == 0) {
+						init();
+						parent.layer.close(index);
+					} else {
+						$.alert(rsp.msg);
+						parent.layer.close(index);
+					}
+				});
+			}
+		}
+
+		function init() {
+			var version, lastversion;
+			var xhr = $.getJSON('<%=luci.dispatcher.build_url("api", "misstar", "get_koolproxy")%>', {}, function(rsp) {
+				if(rsp.code == 0) {
+					var tpl = $('#ftpbody').html();
+					var tpldata = [];
+					tpldata.enable = rsp.enable;
+					rsp.status == 0 ? tpldata.koolproxy_status = "未运行" : tpldata.koolproxy_status = "运行中 koolproxy:" + rsp.kp_version;
+					tpldata.mode = rsp.mode;
+					version = rsp.version;
+					koolproxy_acl_default_mode = rsp.koolproxy_acl_default_mode;
+					tpldata.version = version;
+					tpldata.disabled = rsp.ss_mode;
+					tpldata.v_update_date = rsp.v_update_date;
+					tpldata.s_update_date = rsp.s_update_date;
+					$('#ftp_body').html(tpl.tmpl(tpldata));
+					setTimeout(function() {
+						var form = layui.form();
+						form.render();
+					}, 100);
+					var tpl = $('#tpllanconlist').html();
+					list = rsp.LanCon;
+					tpldata = [];
+					if(list.length > 0) {
+						for(var i = 0; i < list.length; i++) {
+							var item = {
+								mac: list[i].mac,
+								name: list[i].name,
+								ip: list[i].ip,
+								mode: list[i].mode
+							}
+							tpldata.push(item);
+						}
+					}
+					tpldata.koolproxy_acl_default_mode = koolproxy_acl_default_mode;
+					$('#lanconlist').html(tpl.tmpl({
+						lanconlist: tpldata
+					}));
+					var xhr = $.getJSON('<%=luci.dispatcher.build_url("api", "misstar", "get_devlist")%>', {}, function(rsp) {
+						if(rsp.code == 0) {
+							hostlist = rsp.list;
+							if(hostlist.length > 0) {
+								var obj = document.getElementById("hostname");
+								obj.options.length = 0;
+								obj.options.add(new Option("请选择设备", "0"));
+								for(var i = 0; i < hostlist.length; i++) {
+									obj.options.add(new Option(hostlist[i].devname, hostlist[i].mac));
+								}
+							}
+						}
+					});
+					$.ajax({
+						url: "http://www.misstar.com/tools/appstore/<%=model%>/applist.php",
+						jsonp: 'callback',
+						dataType: 'jsonp',
+						data: 'rm',
+						timeout: 2000,
+						success: function(rsp) {
+							if(rsp.code == 0) {
+								list = rsp.applist;
+								for(var i = 0; i < list.length; i++) {
+									if(list[i].href == 'koolproxy') {
+										lastversion = list[i].version;
+										break;
+									}
+								}
+							}
+							if(version < lastversion) {
+								document.getElementById("upgrade").style.display = "block";
+							}
+						}
+					});
+					var str = window.location.href;
+					str = str.substr(str.lastIndexOf("/") + 1);
+					iframe = parent.document.getElementById(str);
+					var dHeight = iframe.contentWindow.document.documentElement.scrollHeight;
+					iframe.style.height = dHeight + "px";
+					$(".layui-btn").each(function() {
+						$(this).unbind('click').click(function() {
+							bottonclick($(this).attr('data-type'), $(this).attr('data-id'));
+						});
+					});
+				}
+
+			});
+			return xhr;
+		}
+	</script>
+
+</html>

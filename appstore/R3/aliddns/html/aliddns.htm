@@ -1,0 +1,274 @@
+<%
+local model = luci.sys.exec("cat /proc/xiaoqiang/model")
+%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+	<head>
+		<%include("web/inc/head")%>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Misstar Tools - 小米路由器</title>
+		<meta name="Copyright" content="Douco Design." />
+		<meta name="viewport" content="width=1200">
+		<!--<link href="<%=resource%>/web/luci/css/public.css" rel="stylesheet" type="text/css">-->
+		<link href="<%=resource%>/web/luci/css/misstar.css" rel="stylesheet" type="text/css">
+		<script type="text/javascript" src="<%=resource%>/web/luci/js/jquery.min.js"></script>
+		<!--<script type="text/javascript" src="<%=resource%>/web/luci/js/global.js"></script>-->
+		<!--<script type="text/javascript" src="<%=resource%>/web/luci/js/jquery.tab.js"></script>-->
+		<script type="text/javascript" src="<%=resource%>/web/luci/js/qwrap.js"></script>
+		<script type="text/javascript" src="<%=resource%>/web/luci/js/jbase64.js"></script>
+		<link rel="stylesheet" href="<%=resource%>/web/luci/plugins/layui/css/layui.css" media="all" />
+		<link rel="stylesheet" href="<%=resource%>/web/luci/css/global.css" media="all">
+		<link rel="stylesheet" href="<%=resource%>/web/luci/plugins/font-awesome/css/font-awesome.min.css">
+		<link rel="stylesheet" href="<%=resource%>/web/luci/plugins/layui/css/layui.css" media="all" />
+		<script type="text/javascript" src="<%=resource%>/web/luci/layer-pc/layer.js"></script>
+		<link rel="stylesheet" href="<%=resource%>/web/luci/plugins/font-awesome/css/font-awesome.min.css">
+	</head>
+
+	<body style="background: white;">
+		<form class="layui-form" method="POST" name="aliddns" id="aliddns">
+			<div id="aliddns_body">
+			</div>
+		</form>
+		<div id="footer" style="text-align: center;">
+			<div class="line"></div>
+			<ul>
+				版权所有 © 2013-2017
+				<a href="http://www.misstar.com">Misstar Tools</a>，并保留所有权利。
+			</ul>
+		</div>
+		<script type="tmpl/html" id="aliddnsbody">
+			<fieldset class="layui-elem-field">
+				<legend>AliDdns</legend>
+				<div class="layui-field-box">
+
+					<fieldset class="layui-elem-field layui-field-title">
+						<legend>工作状态</legend>
+						<div class="layui-field-box">
+							<div class="layui-form-item">
+								<div class="layui-inline">
+									<label class="layui-form-label">插件版本：</label>
+									<div class="layui-form-mid layui-word-aux" id="version">{$version}
+									</div>
+									<div class="box site-demo-active" style="top: 15px;float: left;display: none;" id="upgrade">
+										<a href="javascript:;" style="top: 15px;" class="layui-btn layui-btn-normal  layui-btn-small" onclick="upgrade();">升级</a>
+									</div>
+								</div>
+							</div>
+							<div class="layui-form-item">
+								<div class="layui-inline">
+									<label class="layui-form-label">运行状态： </label>
+									<div class="layui-form-mid layui-word-aux" id="aliddns_status">{$aliddns_status}
+									</div>
+								</div>
+							</div>
+							<div class="layui-form-item">
+								<div class="layui-inline">
+									<label class="layui-form-label">最近更新： </label>
+									<div class="layui-form-mid layui-word-aux" id="aliddns_last_act">{$aliddns_last_act}
+									</div>
+								</div>
+							</div>
+					</fieldset>
+
+					<fieldset class="layui-elem-field layui-field-title">
+						<legend>设置</legend>
+						<div class="layui-field-box">
+							<div class="layui-form-item">
+								<label class="layui-form-label">功能开关</label>
+								<div class="layui-input-inline">
+									<input type="checkbox" name="aliddns_enable" id="aliddns_enable" title="开启" {if($aliddns_enable=='1' )}checked="true" {/if}>
+								</div>
+							</div>
+							<div class=" layui-form-item ">
+								<label class="layui-form-label ">Access Key ID</label>
+								<div class="layui-input-inline ">
+									<input type="text" name="aliddns_aki" id="aliddns_aki"  autocomplete="off " onclick="tips('阿里网站里面的Access Key ID','#aliddns_aki');" class="layui-input " value="{$aliddns_aki}">
+								</div>
+							</div>
+							<div class=" layui-form-item ">
+								<label class="layui-form-label ">Access Key Secret</label>
+								<div class="layui-input-inline ">
+									<input type="password" name="aliddns_aks" id="aliddns_aks" autocomplete="off " onclick="tips('Access Key Secret','#aliddns_aks');" class="layui-input " value="{$aliddns_aks}">
+								</div>
+							</div>
+							<div class="layui-form-item">
+								<div class="layui-inline">
+									<label class="layui-form-label">域名</label>
+									<div class="layui-input-inline" style="width: 50px;">
+										<input type="text" name="aliddns_name" placeholder="www" lay-verify="required" autocomplete="off" class="layui-input" value="{$aliddns_name}">
+									</div>
+									<div class="layui-form-mid">.</div>
+									<div class="layui-input-inline" style="width: 100px;">
+										<input type="text" name="aliddns_domain" placeholder="baidu.com" lay-verify="required" autocomplete="off" class="layui-input" value="{$aliddns_domain}">
+									</div>
+								</div>
+							</div>
+							<div class=" layui-form-item ">
+								<label class="layui-form-label ">DNS服务器</label>
+								<div class="layui-input-inline ">
+									<input type="text" name="aliddns_dns" id="aliddns_dns"  autocomplete="off " onclick="tips('配置你域名的解析服务器，请确认与你域名配置页面中的一致！','#aliddns_dns');" class="layui-input " value="{$aliddns_dns}">
+								</div>
+							</div>
+							<div class=" layui-form-item ">
+								<label class="layui-form-label ">更新周期</label>
+								<div class="layui-input-inline ">
+									<input type="text" name="aliddns_cycle" id="aliddns_cycle"  autocomplete="off " onclick="tips('路由器检查更新的周期，单位为秒','#aliddns_cycle');" class="layui-input " value="{$aliddns_cycle}">
+								</div>
+							</div>
+							<div class=" layui-form-item ">
+								<label class="layui-form-label ">TTL</label>
+								<div class="layui-input-inline ">
+									<input type="text" name="aliddns_ttl" id="aliddns_ttl"  autocomplete="off " onclick="tips('DNS记录在服务器中留存的时间','#aliddns_ttl');" class="layui-input " value="{$aliddns_ttl}">
+								</div>
+							</div>
+							<div class="layui-form-item">
+								<div class="layui-input-block">
+									<button class="layui-btn" lay-submit="" lay-filter="demo1">立即提交</button>
+									<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+								</div>
+							</div>
+						</div>
+					</fieldset>
+
+					</div>
+			</fieldset>
+		</script>
+
+		<script type="text/javascript" src="<%=resource%>/web/luci/plugins/layui/layui.js"></script>
+		<script>
+			layui.use(['form', 'layedit', 'laydate'], function() {
+				var form = layui.form(),
+					layer = layui.layer,
+					layedit = layui.layedit,
+					laydate = layui.laydate;
+
+				//创建一个编辑器
+				var editIndex = layedit.build('LAY_demo_editor');
+
+				//监听提交
+				form.on('submit(demo1)', function(data) {
+					var url = this.action,
+						method = this.method,
+						param = $(this).serialize(),
+						formName = this.name;
+					var index = parent.layer.load(0, {
+						shade: [0.2, '#393D49']
+					});
+					data.field.aliddns_enable == 'on' ? data.field.aliddns_enable = 1 : data.field.aliddns_enable = 0;
+					var xhr = $.getJSON('<%=luci.dispatcher.build_url("api", "misstar", "set_aliddns")%>', data.field, function(rsp) {});
+					setTimeout(function() {
+						parent.layer.close(index);
+						location.reload();
+					}, 2000);
+					return false;
+				});
+			});
+		</script>
+		<script>
+			function tips(data, id) {
+				var layer = layui.layer;
+				layer.tips(data, id);
+			}
+
+			function upgrade() {
+				var index = layer.load(0, {
+					shade: [0.2, '#393D49']
+				});
+				var str = window.location.href;
+				id = str.substr(str.lastIndexOf("/") + 1);
+				$.getJSON('<%=luci.dispatcher.build_url("api","misstar","appstore")%>', {
+					id: id,
+					operate: 'upgrade'
+				}, function(rsp) {
+					if(rsp.code == 0) {
+						location.reload();
+						layer.close(index);
+					} else {
+						$.alert(rsp.msg);
+						layer.close(index);
+					}
+				});
+			}
+			var modelSs = (function() {
+				function admInfo() {
+					var version, lastversion;
+					var xhr = $.getJSON('<%=luci.dispatcher.build_url("api", "misstar", "get_aliddns")%>', {}, function(rsp) {
+						if(rsp.code == 0) {
+							var tpl = $('#aliddnsbody').html();
+							var tpldata = {
+								version: '',
+								aliddns_enable: '',
+								aliddns_dns: '',
+								aliddns_ttl: '',
+								aliddns_cycle: '',
+								aliddns_domain: '',
+								aliddns_name: '',
+								aliddns_aks: '',
+								aliddns_aki: '',
+								aliddns_last_act: ''
+							};
+							tpldata.aliddns_enable = rsp.aliddns_enable;
+							rsp.aliddns_status == 0 ? tpldata.aliddns_status = "未开启" : tpldata.aliddns_status = "运行中";
+							tpldata.aliddns_dns = rsp.aliddns_dns;
+							tpldata.aliddns_ttl = rsp.aliddns_ttl;
+							tpldata.aliddns_cycle = rsp.aliddns_cycle;
+							tpldata.aliddns_domain = rsp.aliddns_domain;
+							tpldata.aliddns_name = rsp.aliddns_name;
+							tpldata.aliddns_aks = rsp.aliddns_aks;
+							tpldata.aliddns_aki = rsp.aliddns_aki;
+							tpldata.aliddns_last_act = rsp.aliddns_last_act;
+							tpldata.version = rsp.version;
+							$('#aliddns_body').html(tpl.tmpl(tpldata));
+							version = rsp.version;
+							setTimeout(function() {
+								var form = layui.form();
+								form.render();
+							}, 100);
+							$.ajax({
+								url: "http://www.misstar.com/tools/appstore/<%=model%>/applist.php",
+								jsonp: 'callback',
+								dataType: 'jsonp',
+								data: 'aliddns',
+								timeout: 2000,
+								success: function(rsp) {
+									if(rsp.code == 0) {
+										list = rsp.applist;
+
+										for(var i = 0; i < list.length; i++) {
+											if(list[i].href == 'aliddns') {
+												lastversion = list[i].version;
+												break;
+											}
+										}
+
+									}
+									if(version < lastversion) {
+										document.getElementById("upgrade").style.display = "block";
+									}
+								}
+							});
+							var str = window.location.href;
+							str = str.substr(str.lastIndexOf("/") + 1);
+							iframe = parent.document.getElementById(str);
+							var dHeight = iframe.contentWindow.document.documentElement.scrollHeight;
+							iframe.style.height = dHeight + "px";
+						}
+
+					});
+
+					return xhr;
+				}
+				return {
+					init: function() {
+						admInfo();
+					}
+				}
+			}());
+			$(function() {
+				modelSs.init();
+			});
+		</script>
+	</body>
+
+</html>

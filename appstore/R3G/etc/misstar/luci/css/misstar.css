@@ -1,0 +1,66 @@
+/* 
+ * Copyright (C) 2016 Starry <starry@misstar.com>
+ *
+ * This file is part of misstar tools for xiaomi router .
+ *
+ */
+.wrap{}
+.wrap .box{display: block;width: 195px;height: 140px;float: left;text-align: center;}
+.wrap .box:hover {border-radius:10px;background: #F8F8F8;}
+.wrap .box {background: white;}
+
+.panel-content {
+	background: #fff;
+	border-radius: 5px;
+	zoom: 1
+}
+
+.panel-content .hd h3 {
+	height: 48px;
+	line-height: 48px;
+	font-size: 16px;
+	color: #999;
+	text-align: center;
+	font-weight: normal;
+	background: #f2f2f2;
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+	border-bottom: 1px solid #e5e5e5
+}
+
+.panel-content .bd {
+	text-align: center;
+	vertical-align: middle
+}
+
+.panel-content .d-bd {
+	text-align: center
+}
+
+.panel-content .d-ft {
+	text-align: center;
+	padding: 0 0 30px
+}
+
+.panel-content .ft .btn {
+	margin: 0 5px
+}
+
+.panel .close {
+	display: block;
+	position: absolute;
+	right: 30px;
+	top: 13px;
+	height: 20px;
+	width: 20px;
+	text-align: center;
+	color: #fff;
+	background: url(../img/ico_dlg_close.png?20140716) no-repeat center center;
+	cursor: pointer
+}
+
+.panel-mask {
+	background: #000;
+	filter: alpha(opacity=50);
+	opacity: .5
+}

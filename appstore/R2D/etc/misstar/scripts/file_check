@@ -1,0 +1,81 @@
+#!/bin/sh
+#---------------------------------------------------------------- 
+# Shell Name：file_check 
+# Description：Check the integrity of the plugin file after the firmware upgrade.
+# Author：Starry
+# E-mail: starry@misstar.com
+# Time：2016-11-06 02:30 CST
+# Copyright © 2016 Misstar Tools. All rights reserved.
+#----------------------------------------------------------------*/
+
+mount -o remount,rw /
+. /etc/misstar/scripts/MTbase
+result=$(cat /etc/crontabs/root | grep Monitor | wc -l)
+
+if [ "$result" == "0" ]; then
+
+	echo "* * * * * /etc/misstar/scripts/Monitor " >> /etc/crontabs/root
+	
+fi
+
+result=$(cat /etc/crontabs/root | grep Dayjob | wc -l)
+
+if [ "$result" == "0" ]; then
+
+	echo "0 4 * * * /etc/misstar/scripts/Dayjob " >> /etc/crontabs/root
+	
+fi
+
+result=$(cat /usr/lib/lua/luci/controller/web/index.lua | grep misstar/index | wc -l)
+
+
+if [ "$result" == "0" ]; then
+	mv /usr/lib/lua/luci/controller/web/index.lua /tmp/index.lua
+	cp -p /tmp/index.lua /tmp/index.lua_backup
+	
+	sed -i "/"topograph"/a\\  entry({\"web\", \"misstar\", \"add\"}, template(\"web/setting/misstar/add\"), _(\"实用工具\"), 82)" /tmp/index.lua
+	result1=$?
+	sed -i "/"topograph"/a\\  entry({\"web\", \"misstar\", \"index\"}, template(\"web/setting/misstar/index\"), _(\"实用工具\"), 81)" /tmp/index.lua
+	result2=$?
+	sed -i "/"topograph"/a\\  entry({\"web\", \"misstar\"}, alias(\"web\", \"misstar\", \"index\"), _(\"路由设置\"), 80)" /tmp/index.lua
+	result3=$?
+	mv /tmp/index.lua /usr/lib/lua/luci/controller/web/index.lua
+	result4=$?
+	
+	if [ "$result1" == '0' -a "$result2" == '0' -a "$result3" == '0' -a "$result4" == '0' ];then
+		MTlog "更新index.lua成功。"
+	else	
+		mv /tmp/index.lua_backup /usr/lib/lua/luci/controller/web/index.lua
+		exit
+	fi
+fi
+
+
+result=$(cat /usr/lib/lua/luci/view/web/inc/header.htm | grep misstar | wc -l)
+
+if [ "$result" == "0" ]; then
+	mv /usr/lib/lua/luci/view/web/inc/header.htm /tmp/header.htm
+	cp -p /tmp/header.htm /tmp/header.htm_backup
+	
+	result=$(grep -rn ' <li <%if string.find(REQUEST_URI, "/prosetting") then%>class="active"' /tmp/header.htm | awk -F : '{print $1}')
+	#result=`expr $result + 1`
+	sed -i ""$result"a\\<li <%if string.find(REQUEST_URI, \"/misstar\") then%>class=\"active\"<%end%>><a href=\"<%=luci.dispatcher.build_url(\"web\",\"misstar\",\"index\")%>\"><%:MT工具箱%></a></li>" /tmp/header.htm
+    result1=$?
+    result=$(grep -rn ' <li <%if string.find(REQUEST_URI, "/apsetting") then%>class="active"' /tmp/header.htm | awk -F : '{print $1}')
+	#result=`expr $result + 1`
+    sed -i ""$result"a\\<li <%if string.find(REQUEST_URI, \"/misstar\") then%>class=\"active\"<%end%>><a href=\"<%=luci.dispatcher.build_url(\"web\",\"misstar\",\"index\")%>\"><%:MT工具箱%></a></li>" /tmp/header.htm
+    result2=$?
+    mv /tmp/header.htm /usr/lib/lua/luci/view/web/inc/header.htm
+    result3=$?
+    
+	if [ "$result1" == '0' -a "$result2" == '0' -a "$result3" == '0' ];then
+		MTlog "更新index.lua成功。"
+	else
+		mv /tmp/header.htm_backup /usr/lib/lua/luci/view/web/inc/header.htm
+		exit
+	fi
+
+fi
+
+rm -rf /tmp/luci-indexcache /tmp/luci-modulecache/*
+

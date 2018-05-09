@@ -1,0 +1,9 @@
+App_enable=$(uci get misstar.frp.enable)  #misstar-frp
+if [ "$App_enable" = '1' ];then  #misstar-frp
+	result1=$(ps | grep frp | grep misstar | grep -v 'status' | grep -v 'grep' | wc -l)  #misstar-frp
+	if [ "$result1" == "0" ]; then #misstar-frp
+		MTlog 3 "Frp Process state Error,Try to restart it..."  #misstar-frp
+		/etc/misstar/applications/frp/script/frp stop  #misstar-frp
+		/etc/misstar/applications/frp/script/frp start  #misstar-frp
+	fi  #misstar-frp
+fi #misstar-frp

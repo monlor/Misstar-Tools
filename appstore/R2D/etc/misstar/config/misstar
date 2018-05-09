@@ -1,0 +1,2 @@
+config config 'misstar'
+	option version '2.7.05.21'

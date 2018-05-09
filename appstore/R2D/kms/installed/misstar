@@ -1,0 +1,4 @@
+config config 'kms'
+	option version '1.0.1'
+	option enable '0'
+	option kms_wan '0'

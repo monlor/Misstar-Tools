@@ -1,0 +1,70 @@
+#!/bin/sh /etc/rc.common
+#---------------------------------------------------------------- 
+# Shell Name：adm 
+# Description：Plug-in startup script
+# Author：Starry
+# E-mail: starry@misstar.com
+# Time：2016-11-06 02:30 CST
+# Copyright © 2016 Misstar Tools. All rights reserved.
+#----------------------------------------------------------------*/
+START=99
+. /etc/misstar/scripts/MTbase
+EXTRA_COMMANDS= status  version
+EXTRA_HELP=        status  Get shadowsocks status
+        version Get Misstar Tools Version
+
+appname=adm
+start() {
+	adm_enable=$(uci get misstar.$appname.enable)
+	if [ $adm_enable = '0' ];then
+		echo service Adm is disabeld!
+		exit
+	fi
+ 	AreadyRunning=$(ps | grep adm | grep -v grep | grep -v script | grep -v '{' | wc -l)
+	if [ $AreadyRunning != 0 ];then
+		echo "ADM is aleady running,Exit..."
+		exit
+	fi
+ 	MTlog 1 "Starting Adm service...."
+    lanip=$(uci get network.lan.ipaddr)
+    MTlog 1 Getting configutrion...
+    adm_mode=$(uci get misstar.$appname.mode)
+    if [ $adm_mode == wholemode ]; then
+    	iptables -t nat -N ADM
+		iptables -t nat -A ADM -d $lanip/16 -j RETURN
+		iptables -t nat -A ADM -p tcp --dport 80 -j REDIRECT --to-ports 18309
+		iptables -t nat -A PREROUTING -p tcp -j ADM
+		service_start /etc/misstar/applications/adm/bin/adm & 2>/dev/null
+    elif [ $adm_mode == videomode ]; then
+   		service_start /etc/misstar/applications/adm/bin/adm & 2>/dev/null
+    	ipset -N adm_list iphash
+		iptables -t nat -N ADM
+		iptables -t nat -A ADM -d 0.0.0.0/8 -j RETURN
+		iptables -t nat -A ADM -d 10.0.0.0/8 -j RETURN
+		iptables -t nat -A ADM -d 127.0.0.0/8 -j RETURN
+		iptables -t nat -A ADM -d 169.254.0.0/16 -j RETURN
+		iptables -t nat -A ADM -d 172.16.0.0/12 -j RETURN
+		iptables -t nat -A ADM -d 192.168.0.0/16 -j RETURN
+		iptables -t nat -A ADM -d 224.0.0.0/4 -j RETURN
+		iptables -t nat -A ADM -d 240.0.0.0/4 -j RETURN
+		iptables -t nat -A ADM -p tcp --dport 80 -m set --match-set adm_list dst -j REDIRECT --to-port 18309
+		iptables -t nat -A PREROUTING -p tcp -j ADM
+		ln -s /etc/misstar/applications/adm/bin/adm_ipset.txt /tmp/etc/dnsmasq.d/admlist.conf
+		/etc/init.d/dnsmasq reload
+    fi
+    MTlog 1 "Adm started As $adm_mode mode success! "
+}
+stop() {
+    MTlog 1 Stopping Adm service...
+    service_stop /etc/misstar/applications/adm/bin/adm
+    iptables -t nat -D PREROUTING -p tcp -j ADM &> /dev/null
+    iptables -t nat -F ADM &> /dev/null
+	iptables -t nat -X ADM &> /dev/null
+	rm -rf /tmp/etc/dnsmasq.d/adm*
+	ipset destroy adm_list &> /dev/null
+    MTlog 1 "Done!"
+}
+restart() {
+	MTlog 1 "Restarting adm service..."
+    stop;sleep 2;start
+}

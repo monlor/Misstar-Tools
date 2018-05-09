@@ -1,0 +1,74 @@
+#!/bin/ash
+#---------------------------------------------------------------- 
+# Shell Name：misstar 
+# Description：The main script of Misstar Tools
+# Author：Starry
+# E-mail: starry@misstar.com
+# Time：2016-11-06 02:30 CST
+# Copyright © 2016 Misstar Tools. All rights reserved.
+#----------------------------------------------------------------*/
+
+START=99
+STOP=99
+. /etc/misstar/scripts/MTbase
+case "$1" in
+"sshd")
+	case "$2" in
+		"enable")
+			app_enable=$(uci get misstar.rm.sshd_enable)
+			ssh_port=$(uci get misstar.rm.sshd_port)
+			if [ "$app_enable" = '1' ];then
+				result=$(iptables -L | grep misstar-sshd | wc -l)
+				if [ "$result" = '0' ];then
+					iptables -I INPUT -p tcp --dport $ssh_port -j ACCEPT -m comment --comment "misstar-sshd"
+					/usr/sbin/dropbear -P /var/run/dropbear.misstar.pid -p $ssh_port
+				fi
+			fi
+			;;
+		"disable")
+			ssh_port=$(uci get misstar.rm.sshd_port)
+			iptables -D INPUT -p tcp --dport $ssh_port -j ACCEPT -m comment --comment "misstar-sshd" &> /dev/null
+			kill -9 `cat /var/run/dropbear.misstar.pid`
+			;;
+		"status")
+			status=$(iptables -L | grep misstar-sshd | wc -l)
+			echo $status
+	 esac
+	 ;;
+"web")
+	case "$2" in
+		"enable")
+			app_enable=$(uci get misstar.rm.web_enable)
+			if [ "$app_enable" = '1' ];then
+				result=$(cat /etc/sysapihttpd/miwifi-webinitrd.conf | grep misstar | wc -l)
+				if [ "$result" = '0' ];then
+					sed -i '/set \$finalvar \"\$canproxy \$isluci\"/i\    set \$isluci "1"; #misstar' /etc/sysapihttpd/miwifi-webinitrd.conf
+					mount -o remount,rw /
+					sed -i 's/string.upper(luci.sys.net.ip4mac(remote_addr))/luci.sys.net.ip4mac(remote_addr)/'       /usr/lib/lua/luci/view/web/setting/wan.htm
+					sed -i 's/string.upper(luci.sys.net.ip4mac(remote_addr))/luci.sys.net.ip4mac(remote_addr)/'       /usr/lib/lua/luci/view/web/setting/ddns.htm 
+				fi
+				web_port=$(uci get misstar.rm.web_port)
+				if [ "$web_port" != '8098' ];then
+					sed -i '/misstar/d' /etc/sysapihttpd/sysapihttpd.conf 
+					sed -i "/8098/a\    listen ${web_port};#misstar" /etc/sysapihttpd/sysapihttpd.conf 
+				fi
+				result=$(iptables -L | grep $web_port | grep misstar-web | wc -l)
+				if [ "$result" = '0' ];then
+					iptables -I INPUT -p tcp --dport $web_port -j ACCEPT -m comment --comment "misstar-web"
+				fi
+				/etc/init.d/sysapihttpd restart
+			fi
+			;;
+		"disable")
+			sed -i '/misstar/d' /etc/sysapihttpd/miwifi-webinitrd.conf
+			sed -i '/misstar/d' /etc/sysapihttpd/sysapihttpd.conf 
+			web_port=$(uci get misstar.rm.web_port)
+			iptables -D INPUT -p tcp --dport $web_port -j ACCEPT -m comment --comment "misstar-web" &> /dev/null
+			;;
+		"status")
+			status=$(iptables -L | grep 'misstar-web' | wc -l)
+			echo $status
+	 esac
+	 ;;
+esac
+

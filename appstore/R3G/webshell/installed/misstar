@@ -1,0 +1,5 @@
+config config 'webshell'
+	option version '1.0.0'
+	option id '1'
+	option enable '0'
+ 

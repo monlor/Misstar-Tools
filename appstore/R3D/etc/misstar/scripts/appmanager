@@ -1,0 +1,120 @@
+#!/bin/ash
+#---------------------------------------------------------------- 
+# Shell Name：misstar 
+# Description：Application Manager Script
+# Author：Starry
+# E-mail: starry@misstar.com
+# Time：2016-11-06 02:30 CST
+# Copyright © 2016 Misstar Tools. All rights reserved.
+#----------------------------------------------------------------*/
+
+START=99
+STOP=99
+. /etc/misstar/scripts/MTbase
+model=$(cat /proc/xiaoqiang/model)
+   
+case "$1" in
+"add")
+	wget http://www.misstar.com/tools/appstore/$model/$2.mt -O /tmp/$2.mt >/dev/null 2>&1
+	if [ $? -ne 0 ];then
+		echo -e "1801\c"
+		exit
+	fi
+	cd /tmp
+	if [ "$model" == "R3P"  -o "$model" = "R3G" ];then
+		tar -zxvf /tmp/$2.mt -C /tmp >/dev/null 2>&1
+	else
+		unzip -o -P $parameter /tmp/$2.mt -d /tmp >/dev/null 2>&1
+	fi
+	
+	if [ $? -ne 0 ];then
+		echo -e "1802\c"
+		exit
+	fi
+	cp -rf /tmp/$2 /etc/misstar/applications
+	chmod +x -R /etc/misstar/applications/$2/bin/*
+	chmod +x /etc/misstar/applications/$2/script/*
+	. /etc/misstar/applications/$2/installed/json.conf
+	echo >> /etc/misstar/scripts/file_check
+	cat /etc/misstar/applications/$2/installed/filecheck.conf >> /etc/misstar/scripts/file_check 
+	echo >> /etc/config/misstar
+	cat /etc/misstar/applications/$2/installed/misstar >> /etc/config/misstar
+	echo >> /etc/misstar/scripts/Monitor
+	cat /etc/misstar/applications/$2/installed/monitor >> /etc/misstar/scripts/Monitor
+	echo "/etc/misstar/applications/$2/script/$2 restart" >> /etc/misstar/scripts/Dayjob
+	cp -rf /etc/misstar/applications/$2/installed/*.png /etc/misstar/luci/img/
+	lua /etc/misstar/scripts/applist.lua add '{title="'$title'",icon="'$icon'",href="'$href'",version="'$version'",versionlog="'$versionlog'",describe="'$describe'"}'
+	if [ $? -ne 0 ];then
+		echo -e "1803\c"
+		exit
+	fi
+	curl http://www.misstar.com/tools/appcounter.php -s | awk -F ":" '{print $2}' | awk -F "}" '{print $1}'
+	/etc/misstar/scripts/file_check 
+	rm -rf /etc/misstar/applications/$2/installed/
+	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache/*
+	rm -rf /tmp/$2
+	rm -rf /tmp/$2.mt
+	 ;;
+"upgrade")
+	lua /etc/misstar/scripts/applist.lua del $2
+	sed -i "/applications\/$2/d" /usr/lib/lua/luci/controller/web/index.lua
+	sed -i "/misstar-$2/d" /etc/misstar/scripts/file_check
+	sed -i "/misstar-$2/d" /etc/misstar/scripts/Monitor
+	
+	wget http://www.misstar.com/tools/appstore/$model/$2.mt -O /tmp/$2.mt >/dev/null 2>&1
+	if [ $? -ne 0 ];then
+		echo -e "1804\c"
+		exit
+	fi
+	cd /tmp
+	if [ "$model" == "R3P" ];then
+		tar -zxvf /tmp/$2.mt -C /tmp >/dev/null 2>&1
+	else
+		unzip -o -P $parameter /tmp/$2.mt -d /tmp >/dev/null 2>&1
+	fi
+	if [ $? -ne 0 ];then
+		echo -e "1805\c"
+		exit
+	fi
+	rm -rf /tmp/$2/config
+	cp -rf /tmp/$2 /etc/misstar/applications
+	chmod +x /etc/misstar/applications/$2/bin/*
+	chmod +x /etc/misstar/applications/$2/script/*
+	
+	. /etc/misstar/applications/$2/installed/json.conf
+	
+	echo >> /etc/misstar/scripts/file_check
+	
+	cat /etc/misstar/applications/$2/installed/filecheck.conf >> /etc/misstar/scripts/file_check 
+
+	echo >> /etc/misstar/scripts/Monitor
+	cat /etc/misstar/applications/$2/installed/monitor >> /etc/misstar/scripts/Monitor
+	
+	cp -rf /etc/misstar/applications/$2/installed/*.png /etc/misstar/luci/img/
+	lua /etc/misstar/scripts/applist.lua add '{title="'$title'",icon="'$icon'",href="'$href'",version="'$version'",versionlog="'$versionlog'",describe="'$describe'"}'
+	if [ $? -ne 0 ];then
+		echo -e "1806\c"
+		exit
+	fi
+	uci set misstar.$2.version=$version
+    uci commit misstar
+	/etc/misstar/scripts/file_check 
+	rm -rf /etc/misstar/applications/$2/installed/
+	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache/*
+	rm -rf /tmp/$2
+
+	 ;;
+"del")
+	/etc/misstar/applications/$2/script/$2 stop
+	uci delete misstar.$2
+	uci commit misstar
+	rm -rf /etc/misstar/applications/$2
+	lua /etc/misstar/scripts/applist.lua del $2
+	sed -i "/applications\/$2/d" /usr/lib/lua/luci/controller/web/index.lua
+	sed -i "/misstar-$2/d" /etc/misstar/scripts/file_check
+	sed -i "/misstar-$2/d" /etc/misstar/scripts/Monitor
+	sed -i "/script\/$2/d" /etc/misstar/scripts/Dayjob
+	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache/*
+	 ;;
+esac
+

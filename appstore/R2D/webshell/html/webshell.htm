@@ -1,0 +1,48 @@
+<%
+local model = luci.sys.exec("cat /proc/xiaoqiang/model")
+%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+	<head>
+		<%include("web/inc/head")%>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Misstar Tools - 小米路由器</title>
+		<meta name="Copyright" content="Douco Design." />
+		<meta name="viewport" content="width=1200">
+
+		<script type="text/javascript" src="<%=resource%>/web/luci/js/jquery.min.js"></script>
+		<script type="text/javascript" src="<%=resource%>/web/luci/layer-pc/layer.js"></script>
+	</head>
+
+	<body onload="init();" style="background: white;" style="width: 100%;height: 100%;">
+		<iframe id="webshell" src="" width="100%" height="600px" style="display: none;"> 
+		MisstarTools使用了框架技术，但是您的浏览器不支持框架，请升级您的浏览器以便正常访问脚本之家。 
+		</iframe>
+	</body>
+	<script type="text/javascript">
+		function init() {
+			var xhr = $.getJSON('<%=luci.dispatcher.build_url("api", "misstar", "on_webshell")%>', {}, function(rsp) {});
+			var index = layer.load(0, {
+						shade: [0.2, '#393D49']
+					});
+			setTimeout(function() {
+				var host = window.location.host;
+				host = host.split(":");
+				host = host[0];
+				host = "http://" + host + ':10085';
+				document.getElementById("webshell").src = host;
+				document.getElementById("webshell").style.display = "block";
+				//location.reload();
+				layer.close(index);
+				var str = window.location.href;
+				str = str.substr(str.lastIndexOf("/") + 1);
+				iframe = parent.document.getElementById(str);
+				var dHeight = iframe.contentWindow.document.documentElement.scrollHeight;
+				iframe.style.height = dHeight + "px";
+			}, 1000);
+
+		}
+	</script>
+
+</html>

@@ -1,0 +1,4 @@
+config config 'aria2'
+	option user_path '/userdisk/data/'
+	option version '1.0.2'
+	option enable '0'

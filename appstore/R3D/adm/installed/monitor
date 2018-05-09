@@ -1,0 +1,9 @@
+#misstar-adm
+App_enable=$(uci get misstar.adm.enable) #misstar-adm
+if [ "$App_enable" = '1' ];then #misstar-adm
+	result=$(ps | grep adm | grep -v grep | grep -v script | wc -l) #misstar-adm
+	if [ "$result" == "0" ]; then #misstar-adm
+		MTlog 3 "ADM Process state Error,Try to restart it..." #misstar-adm
+		/etc/misstar/applications/adm/script/adm restart #misstar-adm
+	fi #misstar-adm
+fi #misstar-adm

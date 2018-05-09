@@ -1,0 +1,23 @@
+App_enable=$(uci get misstar.ss.enable)  #misstar-ss
+if [ "$App_enable" = '1' ];then  #misstar-ss
+	result1=$(ps | grep -E "ss-redir|ssr-redir" | grep -v 'grep' | grep -v script | wc -l)  #misstar-ss
+	result2=$(iptables -t nat -L PREROUTING | grep SHADOWSOCKS | wc -l) #misstar-ss
+	if [ "$result1" == "0" ] || [ "$result2" == "0" ]; then #misstar-ss
+		MTlog 3 "SS Process state Error,Try to restart it..."  #misstar-ss
+		/etc/misstar/applications/ss/script/ss restart  #misstar-ss
+	fi  #misstar-ss
+	i=1  #misstar-ss
+	while :  #misstar-ss
+	do  #misstar-ss
+		ss_status=$(/etc/misstar/applications/ss/script/ss status)   #misstar-ss
+		if [ "$ss_status" = '2' ];then  #misstar-ss
+			break  #misstar-ss
+		fi  #misstar-ss
+		sleep 10  #misstar-ss
+		if [ "$i" = '3' ];then #misstar-ss
+			/etc/misstar/applications/ss/script/ss restart  #misstar-ss
+			break #misstar-ss
+		fi  #misstar-ss
+		i=`expr $i + 1`  #misstar-ss
+	done  #misstar-ss
+fi #misstar-ss

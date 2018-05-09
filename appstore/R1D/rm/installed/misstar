@@ -1,0 +1,7 @@
+config config 'rm'
+	option version '1.0.2'
+	option web_port '8098'
+	option web_enable '0'
+	option sshd__enable '0'
+	option sshd_port '22'
+	

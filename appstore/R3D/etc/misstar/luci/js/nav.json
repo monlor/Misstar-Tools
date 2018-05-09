@@ -1,0 +1,10 @@
+[{
+	"title": "Misstar Tools",
+	"icon": "fa-cubes",
+	"spread": true,
+	"children": [{
+		"title": "插件管理",
+		"icon": "&#xe614;",
+		"href": "add"
+	}]
+}]

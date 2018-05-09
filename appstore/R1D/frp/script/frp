@@ -1,0 +1,77 @@
+#!/bin/sh /etc/rc.common
+#---------------------------------------------------------------- 
+# Shell Name：frp
+# Description：Plug-in startup script
+# Author：Starry
+# E-mail: starry@misstar.com
+# Time：2017-06-20 02:30 CST
+# Copyright © 2016 Misstar Tools. All rights reserved.
+#----------------------------------------------------------------*/
+. /etc/misstar/scripts/MTbase
+EXTRA_COMMANDS=" status  version dnsstatus dnsconfig"
+EXTRA_HELP="        status  Get shadowsocks status
+        version Get Misstar Tools Version"
+
+now=`date`
+
+start(){
+	appenable=$(uci get misstar.frp.enable)
+	if [ "$appenable" = '0' ];then
+		echo "service frp is disabeld!"
+		uci set misstar.frp.frp_last_act="$now: service frp is disabeld!"
+    	uci commit misstar
+		exit
+	fi	
+	
+	server_addr=$(uci get misstar.frp.server_addr)
+	server_port=$(uci get misstar.frp.server_port)
+	privilege_token=$(uci get misstar.frp.privilege_token)
+	echo "[common]" > /etc/misstar/applications/frp/config/frpc.conf 
+	echo "server_addr = "$server_addr >> /etc/misstar/applications/frp/config/frpc.conf 
+	echo "server_port = "$server_port >> /etc/misstar/applications/frp/config/frpc.conf 
+	echo "privilege_token = "$privilege_token >> /etc/misstar/applications/frp/config/frpc.conf
+	
+	cat /etc/misstar/applications/frp/config/frplist | while read line
+	do
+		id=$(echo $line | awk -F ',' '{print $1}')
+		type=$(echo $line | awk -F ',' '{print $2}')
+		domain=$(echo $line | awk -F ',' '{print $3}')
+		localip=$(echo $line | awk -F ',' '{print $4}')
+		localport=$(echo $line | awk -F ',' '{print $5}')
+		remoteport=$(echo $line | awk -F ',' '{print $6}')
+		use_encryption=$(echo $line | awk -F ',' '{print $7}')
+		use_compression=$(echo $line | awk -F ',' '{print $8}')
+		
+		echo "" >> /etc/misstar/applications/frp/config/frpc.conf 
+		echo "[$id]" >> /etc/misstar/applications/frp/config/frpc.conf 
+		echo "type = "$type >> /etc/misstar/applications/frp/config/frpc.conf 
+		
+		result=$(echo $domain | grep '\.' | wc -l)
+		if [ "$result" == "0" ]; then
+			echo "subdomain = "$domain >> /etc/misstar/applications/frp/config/frpc.conf 
+		else
+			echo "custom_domains = "$domain >> /etc/misstar/applications/frp/config/frpc.conf 
+		fi
+		echo "local_ip = "$localip >> /etc/misstar/applications/frp/config/frpc.conf
+		echo "local_port = "$localport >> /etc/misstar/applications/frp/config/frpc.conf
+		echo "remote_port = "$remoteport >> /etc/misstar/applications/frp/config/frpc.conf
+		echo "use_encryption = "$use_encryption >> /etc/misstar/applications/frp/config/frpc.conf
+		echo "use_compression = "$use_compression >> /etc/misstar/applications/frp/config/frpc.conf
+	done
+	
+	/etc/misstar/applications/frp/bin/frpc -c /etc/misstar/applications/frp/config/frpc.conf &
+	
+}
+
+stop(){
+	killall frpc
+}
+
+status(){
+	result=$(ps | grep frp | grep misstar | grep -v 'status' | grep -v 'grep' | wc -l)
+	if [ "$result" == '3' ];then
+		echo -e '0\c'
+	else
+		echo -e '1\c'
+	fi
+}

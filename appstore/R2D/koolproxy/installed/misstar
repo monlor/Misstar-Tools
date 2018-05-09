@@ -1,0 +1,5 @@
+config config 'koolproxy'
+	option version '1.0.5'
+	option mode '3'
+	option enable '0'
+	option koolproxy_acl_default_mode '1'

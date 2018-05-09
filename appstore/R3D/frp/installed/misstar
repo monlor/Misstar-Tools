@@ -1,0 +1,6 @@
+config config 'frp'     
+        option version '1.0.0'   
+        option enable '0'                   
+        option server_addr ''
+        option server_port ''           
+        option privilege_token 'misstar.com'

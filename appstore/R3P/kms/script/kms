@@ -1,0 +1,59 @@
+#!/bin/sh /etc/rc.common
+#---------------------------------------------------------------- 
+# Shell Name：kms 
+# Description：Plug-in startup script
+# Author：Starry
+# E-mail: starry@misstar.com
+# Time：2016-11-06 02:30 CST
+# Copyright © 2016 Misstar Tools. All rights reserved.
+#----------------------------------------------------------------*/
+START=99
+. /etc/misstar/scripts/MTbase
+LOG=/tmp/vlmcsd.log
+KMSINI=/etc/misstar/applications/kms/config/vlmcsd.ini
+
+
+APP_PATH=/etc/misstar/applications/kms/bin/kms
+appname=kms
+start() {
+	app_enable=$(uci get misstar.$appname.enable)
+	if [ "$app_enable" = '0' ];then
+		echo "service is disabeld!"
+		exit
+	fi
+	AreadyRunning=$(ps | grep kms | grep -v grep | grep -v script | grep -v '{' | wc -l)
+	if [ "$AreadyRunning" != '0' ];then
+		echo "KMS is aleady running,Exit..."
+		MTlog 1 "KMS is aleady running,Exit..."
+		exit
+	fi
+	MTlog 1 "Starting kms service..."
+	service_start $APP_PATH -i $KMSINI -l $LOG
+	
+	echo -e "srv-host=_vlmcs._tcp,XiaoQiang,1688,0,100\ndomain=lan" > /tmp/etc/dnsmasq.d/vlmcsd.conf
+	/etc/init.d/dnsmasq reload
+	MTlog 1 "Done"
+	kms_wan=$(uci get misstar.kms.kms_wan)
+	if [ "$kms_wan" = '1' ];then
+		MTlog 1 "Add iptables rule for remote access..."
+		iptables -I INPUT -p tcp --dport 1688 -j ACCEPT -m comment --comment "misstar-kms"
+		MTlog 1 "Done!"
+	fi
+}
+
+stop() {
+	MTlog 1 "Stopping kms service..."
+	service_stop $APP_PATH
+	iptables -D INPUT -p tcp --dport 1688 -j ACCEPT -m comment --comment "misstar-kms" &> /dev/null
+	rm -rf /tmp/etc/dnsmasq.d/vlmcsd.conf
+	rm -rf $LOG
+	MTlog 1 "Done!"
+}
+
+restart() 
+{
+	MTlog 1 "Restarting kms service..."
+	stop
+	sleep 3
+	start
+}

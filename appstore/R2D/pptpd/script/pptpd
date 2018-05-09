@@ -1,0 +1,81 @@
+#!/bin/sh /etc/rc.common
+#---------------------------------------------------------------- 
+# Shell Name：pptpd 
+# Description：Plug-in startup script
+# Author：Starry
+# E-mail: starry@misstar.com
+# Time：2016-11-06 02:30 CST
+# Copyright © 2016 Misstar Tools. All rights reserved.
+#----------------------------------------------------------------*/
+START=99
+. /etc/misstar/scripts/MTbase
+
+EXTRA_COMMANDS=" status  version pathcheck add del"
+EXTRA_HELP="        status  Get shadowsocks status
+        version Get Misstar Tools Version"
+
+APP_PATH=/etc/misstar/applications/pptpd/bin/pptpd
+appname=pptpd
+start() {
+	app_enable=$(uci get misstar.$appname.enable)
+	if [ "$app_enable" = '0' ];then
+		echo "service is disabeld!"
+		exit
+	fi
+	AreadyRunning=$(ps | grep pptpd | grep -v grep | grep -v script | grep -v '{' | wc -l)
+	if [ "$AreadyRunning" != '0' ];then
+		echo "pptpd is aleady running,Exit..."
+		MTlog 1 "pptpd is aleady running,Exit..."
+		exit
+	fi
+	MTlog 1 "Starting kms service..."
+	localip=$(uci get misstar.$appname.localip)
+	ip_min=$(uci get misstar.$appname.ip_min)
+	ip_max=$(uci get misstar.$appname.ip_max)
+	dns1=$(uci get misstar.$appname.dns1)
+	dns2=$(uci get misstar.$appname.dns2)
+	cp -rf /etc/misstar/applications/pptpd/config/pptpd.conf /tmp/pptpd.conf
+	cp -rf /etc/misstar/applications/pptpd/config/options.pptpd /tmp/options.pptpd
+	
+	echo "localip "$localip >> /tmp/pptpd.conf
+	network=$(echo $localip | awk -F "." '{print $1"."$2"."$3"."}')
+	echo "remoteip " $network$ip_min"-"$ip_max >> /tmp/pptpd.conf
+	echo "ms-dns "$dns1 >> /tmp/options.pptpd
+	echo "ms-dns "$dns2 >> /tmp/options.pptpd
+	lanip=$(uci get network.lan.ipaddr)
+	echo "ms-wins " $lanip >> /tmp/options.pptpd
+	service_start $APP_PATH -c /tmp/pptpd.conf
+	iptables -I INPUT -p tcp --dport 1723 -j ACCEPT -m comment --comment "misstar-pptpd" &> /dev/null
+	iptables -I FORWARD -i ppp+ -j ACCEPT -m comment --comment "misstar-pptpd" &> /dev/null
+	echo -e "0\c"
+}
+
+stop() {
+	MTlog 1 "Stopping pptpd service..."
+	ps  |grep pptpd | grep -v grep | grep -v {pptpd} | grep -v restart > /tmp/MisTols.log
+	ps  |grep pptpd | grep -v grep | grep -v {pptpd} | grep -v restart | awk '{print $1}' | xargs kill -9
+	rm -rf /tmp/*pptp*
+	iptables -D INPUT -p tcp --dport 1723 -j ACCEPT -m comment --comment "misstar-pptpd" &> /dev/null
+	iptables -D FORWARD -i ppp+ -j ACCEPT -m comment --comment "misstar-pptpd" &> /dev/null
+	MTlog 1 "Done!"
+}
+
+restart() 
+{
+	MTlog 1 "Restarting pptpd service..."
+	stop
+	sleep 3
+	start
+}
+
+
+add(){
+	sed -i "/^$1/"d /etc/ppp/chap-secrets 
+	echo "$1	pptpd	$2	*	#Misstar" >> /etc/ppp/chap-secrets 
+}
+del(){
+	sed -i "/^$1/{/Misstar$/d}" /etc/ppp/chap-secrets
+	cat /tmp/pptp_connected | grep $1 | awk -F " " '{print $7}' |  xargs kill -9
+	sed -i "/$1/"d /tmp/pptp_connected
+}
+

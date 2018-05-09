@@ -1,0 +1,9 @@
+#misstar-ftp
+App_enable=$(uci get misstar.ftp.enable) #misstar-ftp
+if [ "$App_enable" = '1' ];then #misstar-ftp
+	result=$(ps | grep vsftpd | grep -v grep | grep -v script | wc -l) #misstar-ftp
+	if [ "$result" == "0" ]; then #misstar-ftp
+		MTlog 3 "VSFTPD Process state Error,Try to restart it..."  #misstar-ftp
+		/etc/misstar/applications/ftp/script/vsftpd restart #misstar-ftp
+	fi #misstar-ftp
+fi #misstar-ftp

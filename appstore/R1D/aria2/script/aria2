@@ -1,0 +1,91 @@
+#!/bin/sh /etc/rc.common
+#---------------------------------------------------------------- 
+# Shell Name：aria2
+# Description：Plug-in startup script
+# Author：Starry
+# E-mail: starry@misstar.com
+# Time：2016-11-06 02:30 CST
+# Copyright © 2016 Misstar Tools. All rights reserved.
+#----------------------------------------------------------------*/
+START=50
+. /etc/misstar/scripts/MTbase
+EXTRA_COMMANDS=" status  version"
+EXTRA_HELP="        status  Get shadowsocks status
+        version Get Misstar Tools Version"
+
+## Check The Router Hardware Model 
+mode=$(cat /proc/xiaoqiang/model)
+
+if [ "$mode" = "R2D" -o "$mode" = "R1D" ];then
+	Hardware_model="arm"
+elif [ "$mode" = "R3" ];then
+	Hardware_model="mips"
+else
+	echo "This Tools doesn't support XiaoMi Mini"
+	exit
+fi 
+						
+if [ "$Hardware_model" = 'mips' ];then
+	mount -o remount,rw /
+	result1=$(md5sum /lib/libstdc\+\+.so  | awk '{print $1}')
+	result2=$(md5sum /etc/misstar/applications/aria2/bin/libstdc\+\+.so.6.0.16 | awk '{print $1}')
+	if [ "$result1" != "$result2" ]; then
+		rm -rf /lib/libstdc\+\+.so
+		ln -s /etc/misstar/applications/aria2/bin/libstdc\+\+.so.6.0.16 /lib/libstdc\+\+.so
+	fi
+	result3=$(md5sum /lib/libstdc\+\+.so.6 | awk '{print $1}')
+	if [ "$result3" != "$result2" ]; then
+		rm -rf /lib/libstdc\+\+.so.6
+		ln -s /etc/misstar/applications/aria2/bin/libstdc\+\+.so.6.0.16 /lib/libstdc\+\+.so.6
+	fi
+	ln -s /etc/misstar/applications/aria2/bin/libxml2.so /usr/lib/libxml2.so.2
+fi 
+	
+appname=aria2
+								
+
+start() {
+		vsftpd_enable=$(uci get misstar.$appname.enable)
+	if [ "$vsftpd_enable" = '0' ];then
+		echo "service $appname is disabeld!"
+		exit
+	fi
+	
+	AreadyRunning=$(ps | grep aria2c | grep -v grep | grep -v script | grep -v '{' | wc -l)
+	if [ "$AreadyRunning" != '0' ];then
+		echo "Aria2 is aleady running,Exit..."
+		exit
+	fi
+	MTlog 1 "Starting aria2 service...."
+	MTlog 1 "Getting configuration info"
+	userpath=$(uci get misstar.$appname.user_path)
+	if [ $userpath ];then
+		sed -i "/^dir=/cdir=$userpath"  /etc/misstar/applications/aria2/config/aria2.conf 
+	else
+		MTlog 3 "Download path is NULL,Exiting..."
+    	exit
+	fi
+	iptables -I INPUT -p tcp --dport 10086 -j ACCEPT -m comment --comment "misstar-aria2"
+	service_start /etc/misstar/applications/aria2/bin/aria2c --conf-path=/etc/misstar/applications/aria2/config/aria2.conf -D >/dev/null 2>&1
+	MTlog 1 "Done!"
+}
+
+stop() {
+	MTlog 1 "Stopping Aria2 service..."
+	service_stop /etc/misstar/applications/aria2/bin/aria2c --conf-path=/etc/misstar/applications/aria2/config/aria2.conf -D >/dev/null 2>&1
+	iptables -D INPUT -p tcp --dport 10086 -j ACCEPT -m comment --comment "misstar-aria2"
+	MTlog 1 "Done!"
+}
+
+restart() {
+	MTlog 1 "Restarting aria2 service..."
+    stop;sleep 2;start
+}
+
+
+
+
+
+
+
+

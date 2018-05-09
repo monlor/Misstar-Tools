@@ -1,0 +1,9 @@
+App_enable=$(uci get misstar.aliddns.enable)  #misstar-aliddns
+if [ "$App_enable" = '1' ];then  #misstar-aliddns
+	result1=$(ps | grep aliddns | grep misstar | grep -v 'status' | grep -v 'grep' | wc -l)  #misstar-aliddns
+	if [ "$result1" == "0" ]; then #misstar-aliddns
+		MTlog 3 "Aliddns Process state Error,Try to restart it..."  #misstar-aliddns
+		/etc/misstar/applications/aliddns/script/aliddns stop  #misstar-aliddns
+		/etc/misstar/applications/aliddns/script/aliddns start  #misstar-aliddns
+	fi  #misstar-aliddns
+fi #misstar-aliddns

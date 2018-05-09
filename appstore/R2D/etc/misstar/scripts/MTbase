@@ -1,0 +1,6 @@
+MTlog()
+{
+	now=`date "+%Y-%m-%d %H:%M:%S" `
+	echo -e "[$now]\t$1\t$2"  >> /tmp/MisTols.log
+}
+parameter=Misstar_Tools@2017

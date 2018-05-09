@@ -1,0 +1,490 @@
+<%
+local model = luci.sys.exec("cat /proc/xiaoqiang/model")
+%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+	<head>
+		<%include("web/inc/head")%>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Misstar Tools - 小米路由器</title>
+		<meta name="Copyright" content="Douco Design." />
+		<meta name="viewport" content="width=1200">
+		<!--<link href="<%=resource%>/web/luci/css/public.css" rel="stylesheet" type="text/css">-->
+		<script type="text/javascript" src="<%=resource%>/web/luci/js/jquery.min.js"></script>
+		<!--<script type="text/javascript" src="<%=resource%>/web/luci/js/global.js"></script>-->
+		<!--<script type="text/javascript" src="<%=resource%>/web/luci/js/jquery.tab.js"></script>-->
+		<script type="text/javascript" src="<%=resource%>/web/luci/js/qwrap.js"></script>
+		<script type="text/javascript" src="<%=resource%>/web/luci/js/jbase64.js"></script>
+		<link rel="stylesheet" href="<%=resource%>/web/luci/plugins/layui/css/layui.css" media="all" />
+		<link rel="stylesheet" href="<%=resource%>/web/luci/css/global.css" media="all">
+		<link rel="stylesheet" href="<%=resource%>/web/luci/plugins/font-awesome/css/font-awesome.min.css">
+		<link rel="stylesheet" href="<%=resource%>/web/luci/plugins/layui/css/layui.css" media="all" />
+		<script type="text/javascript" src="<%=resource%>/web/luci/layer-pc/layer.js"></script>
+		<link rel="stylesheet" href="<%=resource%>/web/luci/plugins/font-awesome/css/font-awesome.min.css">
+
+	</head>
+
+	<body onload="init();" style="background: white;">
+		<form class="layui-form" method="POST" name="rm" id="rm">
+			<div id="ftp_body">
+			</div>
+		</form>
+		<fieldset class="layui-elem-field layui-field-title">
+			<legend>用户列表</legend>
+			<div class="layui-field-box">
+				<blockquote class="layui-elem-quote">
+					<a href="javascript:;" class="layui-btn layui-btn-small" data-type="adduser">
+						<i class="layui-icon">&#xe608;</i> 添加用户
+					</a>
+				</blockquote>
+				<table class="site-table table-hover">
+					<thead>
+						<tr>
+							<th width="20%">编号</th>
+							<th width="20%">用户名</th>
+							<th width="20%">路径</th>
+							<th width="20%">ssh登录</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id='userlist'>
+						<tr>
+							<td class="center" colspan="5">
+								<%:查询中....%>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</fieldset>
+		<div id="footer" style="text-align: center;">
+			<div class="line"></div>
+			<ul>
+				版权所有 © 2013-2017
+				<a href="http://www.misstar.com">Misstar Tools</a>，并保留所有权利。
+			</ul>
+		</div>
+		<script type="tmpl/html" id="ftpbody">
+			<fieldset class="layui-elem-field layui-field-title">
+				<legend>工作状态</legend>
+				<div class="layui-field-box">
+					<div class="layui-form-item">
+						<div class="layui-inline">
+							<label class="layui-form-label">插件版本</label>
+							<div class="layui-form-mid layui-word-aux" id="version">{$version}
+							</div>
+							<div class="box site-demo-active" style="top: 15px;float: left;display: none;" id="upgrade">
+								<a href="javascript:;" style="top: 15px;" class="layui-btn layui-btn-normal  layui-btn-small" onclick="upgrade();">升级</a>
+							</div>
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<div class="layui-inline">
+							<label class="layui-form-label">运行状态</label>
+							<div class="layui-form-mid layui-word-aux" id="ftp_status">{$ftp_status}
+							</div>
+						</div>
+					</div>
+				</div>
+			</fieldset>
+
+			<fieldset class="layui-elem-field layui-field-title">
+				<legend>设置</legend>
+				<div class="layui-field-box">
+					<div class="layui-form-item">
+						<label class="layui-form-label">服务器开关</label>
+						<div class="layui-input-inline">
+							<input type="checkbox" name="ftp_enable" id="ftp_enable" title="开启" {if($ftp_enable=='1' )}checked="true" {/if}>
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<label class="layui-form-label">FTP端口</label>
+						<div class="layui-input-inline ">
+							<input type="number " name="ftp_port" lay-verify="number" autocomplete="off " class="layui-input " value="{$ftp_port}">
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<label class="layui-form-label">ROOT登录</label>
+						<div class="layui-input-inline">
+							<input type="checkbox" name="root_enable" id="root_enable" title="开启" {if($root_enable=='1' )}checked="true" {/if}>
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<label class="layui-form-label">外网登录</label>
+						<div class="layui-input-inline">
+							<input type="checkbox" name="rm_enable" id="rm_enable" title="开启" {if($rm_enable=='1' )}checked="true" {/if}>
+						</div>
+					</div>
+
+					<div class="layui-form-item">
+						<label class="layui-form-label">匿名登录</label>
+						<div class="layui-input-inline" id="anytip" onclick="tips('匿名登录需要在用户列表里面添加一个用户名为ftp的用户，登录的时候用户名输入ftp，密码不用输入','#anytip');">
+							<input type="checkbox" name="any_enable" id="any_enable"  title="开启" {if($any_enable=='1' )}checked="true" {/if}>
+						</div>
+					</div>
+
+					<div class="layui-form-item">
+						<label class="layui-form-label">允许上传</label>
+						<div class="layui-input-inline">
+							<input type="checkbox" name="write_enable" id="write_enable" title="开启" {if($write_enable=='1' )}checked="true" {/if}>
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<label class="layui-form-label">访问日志</label>
+						<div class="layui-input-inline">
+							<input type="checkbox" name="log_enable" id="xferlog" title="开启" onclick="tips('ftp访问、传输日志：/tmp/log/vsftpd.log','#xferlog');" {if($log_enable=='1' )}checked="true" {/if}>
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<label class="layui-form-label">CHROOT</label>
+						<div class="layui-input-inline" id="chrootdiv" onclick="tips('开启后用户将只能访问用户自己目录，如果需要访问所有目录，请将用户目录设置为根目录/','#chrootdiv');">
+							<input type="checkbox" name="chroot" id="chroot" title="开启" {if($chroot=='1' )}checked="true" {/if}>
+						</div>
+					</div>
+					<div class="layui-form-item">
+						<div class="layui-input-block">
+							<button class="layui-btn" lay-submit="" lay-filter="demo1">立即提交</button>
+							<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+						</div>
+					</div>
+				</div>
+			</fieldset>
+
+		</script>
+		<script type="tmpl/html" id="tpladduser">
+			<form class="layui-form" method="POST" name="gfw" id="gfw">
+				<div class="layui-form-item">
+					<label class="layui-form-label">用户名</label>
+					<div class="layui-input-inline">
+						<input type="text" name="username" id="username" lay-verify="root" autocomplete="off" onclick="tips('添加用户后需要重启ftp服务才能登录','#username');" placeholder="请输入用户名" class="layui-input" value="">
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">连接密码</label>
+					<div class="layui-input-inline">
+						<input type="password" name="password" lay-verify="required" placeholder="请输入密码" autocomplete="off" class="layui-input" value="">
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">默认路径</label>
+					<div class="layui-input-inline">
+						<input type="text" name="userpath" id="userpath" lay-verify="required" oninput="pathcheck();" onclick="tips('如果父目录存在，插件会尝试自动创建目录','#userpath');" autocomplete="off" placeholder="用户路径" class="layui-input" value="">
+					</div>
+					<label id="path1" class="layui-form-label" style="display: none;text-align:left;"><i class="layui-icon"  style="color:green;">&#xe616;</i></label>
+					<label id="path0" class="layui-form-label" style="display: none;text-align:left;width: 100px;"><i class="layui-icon"  style="color:red;">&#x1007;</i>目录不存在</label>
+				</div>
+				<div class="layui-form-item">
+					<label class="layui-form-label">允许ssh登录</label>
+					<div class="layui-input-inline">
+						<input type="checkbox" name="ssh_enable" id="ssh_enable" title="开启">
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<div class="layui-input-block">
+						<button class="layui-btn" lay-submit="" lay-filter="adduser">立即提交</button>
+						<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+					</div>
+				</div>
+
+			</form>
+		</script>
+		<script type="tmpl/html" id="tpluserlist">
+			{if($userlist.length > 0)} {for(var i=0; i
+			< $userlist.length; i++)} <tr>
+				<td>{$userlist[i].id}</td>
+				<td>{$userlist[i].username}</td>
+				<td>{$userlist[i].userpath}</td>
+				<td>
+					{if($userlist[i].binpath==1)}
+					<i class="layui-icon" style="color:green;">&#xe616;</i> {else}
+					<i class="layui-icon" style="color:red;">&#x1007;</i> {/if}
+				</td>
+				<td align="center">
+					<a href="javascript:;" class="layui-btn layui-btn-danger layui-btn-mini" data-type="deluser" data-id={$userlist[i].username}>删除</a>
+				</td>
+
+				</tr>
+				{/for} {else}
+				<tr>
+					<td colspan="5" class="center">没有设置信息</td>
+				</tr>
+				{/if}
+		</script>
+		<script type="text/javascript" src="<%=resource%>/web/luci/plugins/layui/layui.js"></script>
+		<script>
+			layui.use(['form', 'layedit', 'laydate'], function() {
+				var form = layui.form(),
+					layer = layui.layer,
+					layedit = layui.layedit,
+					laydate = layui.laydate;
+
+				//创建一个编辑器
+				var editIndex = layedit.build('LAY_demo_editor');
+				form.verify({
+					root: function(value) {
+						if(value == 'root') {
+							return '请不要输入root！';
+						}
+					}					
+				});
+
+				//监听提交
+				form.on('submit(demo1)', function(data) {
+					var url = this.action,
+						method = this.method,
+						param = $(this).serialize(),
+						formName = this.name;
+					var index = parent.layer.load(0, {
+						shade: [0.2, '#393D49']
+					});
+					data.field.ftp_enable == 'on' ? data.field.ftp_enable = 1 : data.field.ftp_enable = 0;
+					data.field.rm_enable == 'on' ? data.field.rm_enable = 1 : data.field.rm_enable = 0;
+					data.field.root_enable == 'on' ? data.field.root_enable = 1 : data.field.root_enable = 0;
+					data.field.any_enable == 'on' ? data.field.any_enable = 1 : data.field.any_enable = 0;
+					data.field.write_enable == 'on' ? data.field.write_enable = 1 : data.field.write_enable = 0;
+					data.field.log_enable == 'on' ? data.field.log_enable = 1 : data.field.log_enable = 0;
+					data.field.chroot == 'on' ? data.field.chroot = 1 : data.field.chroot = 0;
+					var xhr = $.getJSON('<%=luci.dispatcher.build_url("api", "misstar", "set_ftp")%>', data.field, function(rsp) {
+						if(rsp.code == 0) {
+							//dlgform.close();
+							//location.reload();
+						} else {
+							alert("Failed");
+						}
+						setTimeout(function() {
+							parent.layer.close(index);
+							location.reload();
+						}, 500);
+					});
+					return false;
+				});
+				form.on('submit(adduser)', function(data) {
+					var url = this.action,
+						method = this.method,
+						param = $(this).serialize(),
+						formName = this.name;
+					var index = parent.layer.load(0, {
+						shade: [0.2, '#393D49']
+					});
+
+					data.field.ssh_enable == 'on' ? data.field.ssh_enable = 1 : data.field.ssh_enable = 0;
+
+					var xhr = $.getJSON('<%=luci.dispatcher.build_url("api", "misstar", "add_user")%>', data.field, function(rsp) {
+						if(rsp.code == 0) {
+							//dlgform.close();
+							//location.reload();
+						} else {
+							alert("Failed");
+						}
+						setTimeout(function() {
+							parent.layer.close(index);
+							location.reload();
+						}, 500);
+					});
+					return false;
+				});
+			});
+		</script>
+	</body>
+	<script>
+		function upgrade() {
+			var index = parent.layer.load(0, {
+				shade: [0.2, '#393D49']
+			});
+			var str = window.location.href;
+			id = str.substr(str.lastIndexOf("/") + 1);
+			$.getJSON('<%=luci.dispatcher.build_url("api","misstar","appstore")%>', {
+				id: id,
+				operate: 'upgrade'
+			}, function(rsp) {
+				if(rsp.code == 0) {
+					location.reload();
+					parent.layer.close(index);
+				} else {
+					$.alert(rsp.msg);
+					parent.layer.close(index);
+				}
+			});
+		}
+
+		function pathcheck() {
+			var userpath = document.getElementById("userpath").value;
+			document.getElementById("path0").style.display = 'none';
+			document.getElementById("path1").style.display = 'none';
+			$.getJSON('<%=luci.dispatcher.build_url("api","misstar","pathcheck")%>', {
+				userpath: userpath
+			}, function(rsp) {
+				if(rsp.code == 0) {
+					if(rsp.userpath == '1') {
+						document.getElementById("path1").style.display = 'block';
+						document.getElementById("path0").style.display = 'none';
+					} else {
+						document.getElementById("path0").style.display = 'block';
+						document.getElementById("path1").style.display = 'none';
+					}
+
+				}
+			});
+		}
+
+		function tips(data, id) {
+			var layer = layui.layer;
+			layer.tips(data, id);
+		}
+
+		function bottonclick(datatype, id) {
+			switch(datatype) {
+				case "adduser":
+					var tpl = $('#tpladduser').html(),
+						tpldata = {};
+					dlgform = layer.open({
+						type: 1,
+						title: "添加用户",
+						skin: 'layui-layer-rim', //加上边框
+						area: ['600px', '350px'],
+						content: tpl.tmpl(tpldata),
+						anim: 2,
+						zIndex: 1,
+						shadeClose: true, //开启遮罩关闭
+						btnAlign: 'c',
+						scrollbar: false
+					});
+					setTimeout(function() {
+						var form = layui.form();
+						form.render();
+					}, 100);
+					break;
+				case "deluser":
+					var index = parent.layer.load(0, {
+						shade: [0.2, '#393D49']
+					});
+					$.getJSON('<%=luci.dispatcher.build_url("api","misstar","del_user")%>', {
+						username: id
+					}, function(rsp) {
+						if(rsp.code == 0) {
+							init();
+							parent.layer.close(index);
+						} else {
+							$.alert(rsp.msg);
+							parent.layer.close(index);
+						}
+					});
+					break;
+
+			}
+		}
+
+		function init() {
+			var xhr = $.getJSON('<%=luci.dispatcher.build_url("api", "misstar", "get_ftp")%>', {}, function(rsp) {
+				var version, lastversion;
+				if(rsp.code == 0) {
+					var tpl = $('#ftpbody').html();
+					var tpldata = {
+						ftp_enable: '',
+						rm_enable: '',
+						any_enable: '',
+						white_enable: '',
+						ftp_status: '',
+						root_enable: ''
+					};
+					tpldata.ftp_enable = rsp.ftp_enable;
+					rsp.ftp_status == 0 ? tpldata.ftp_status = "未运行" : tpldata.ftp_status = "运行中";
+					tpldata.rm_enable = rsp.rm_enable;
+					tpldata.any_enable = rsp.any_enable;
+					tpldata.ftp_port = rsp.ftp_port;
+					tpldata.write_enable = rsp.write_enable;
+					tpldata.root_enable = rsp.root_enable;
+					tpldata.log_enable = rsp.log_enable;
+					tpldata.chroot = rsp.chroot;
+					version = rsp.version;
+					tpldata.version = version;
+					$('#ftp_body').html(tpl.tmpl(tpldata));
+					setTimeout(function() {
+						var form = layui.form();
+						form.render();
+					}, 100);
+					$.ajax({
+						url: "http://www.misstar.com/tools/appstore/<%=model%>/applist.php",
+						jsonp: 'callback',
+						dataType: 'jsonp',
+						data: 'rm',
+						timeout: 2000,
+						success: function(rsp) {
+							if(rsp.code == 0) {
+								list = rsp.applist;
+
+								for(var i = 0; i < list.length; i++) {
+									if(list[i].href == 'ftp') {
+										lastversion = list[i].version;
+										break;
+									}
+								}
+
+							}
+							if(version < lastversion) {
+								document.getElementById("upgrade").style.display = "block";
+							}
+						}
+					});
+					var str = window.location.href;
+					str = str.substr(str.lastIndexOf("/") + 1);
+					iframe = parent.document.getElementById(str);
+					var dHeight = iframe.contentWindow.document.documentElement.scrollHeight;
+					iframe.style.height = dHeight + "px";
+				}
+				$(".layui-btn").each(function() {
+					$(this).unbind('click').click(function() {
+						bottonclick($(this).attr('data-type'), $(this).attr('data-id'));
+					});
+				});
+			});
+			xhr = $.getJSON('<%=luci.dispatcher.build_url("api", "misstar", "get_user")%>', {}, function(rsp) {
+				if(rsp.code == 0) {
+					var tpl = $('#userlist').html();
+					var tpldata = {
+						dns_mode: '',
+						dns_server: '',
+						dns_port: ''
+					};
+					userlist = rsp.userlist;
+
+					tpl = $('#tpluserlist').html(),
+						tpldata = [];
+					if(userlist.length > 0) {
+						for(var i = 0; i < userlist.length; i++) {
+							if(userlist[i].username != '') {
+								binpath = userlist[i].binpath;
+								var item = {
+									id: i + 1,
+									username: userlist[i].username,
+									userpath: userlist[i].userpath,
+									binpath: binpath
+								}
+								tpldata.push(item);
+							}
+						}
+					}
+					$('#userlist').html(tpl.tmpl({
+						userlist: tpldata
+					}));
+
+					$(".layui-btn").each(function() {
+						$(this).unbind('click').click(function() {
+							bottonclick($(this).attr('data-type'), $(this).attr('data-id'));
+						});
+					});
+					var str = window.location.href;
+					str = str.substr(str.lastIndexOf("/") + 1);
+					iframe = parent.document.getElementById(str);
+					var dHeight = iframe.contentWindow.document.documentElement.scrollHeight;
+					iframe.style.height = dHeight + "px";
+
+				}
+
+			});
+			return xhr;
+		}
+	</script>
+
+</html>

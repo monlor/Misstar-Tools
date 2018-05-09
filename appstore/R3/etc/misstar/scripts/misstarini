@@ -1,0 +1,76 @@
+#!/bin/sh
+#---------------------------------------------------------------- 
+# Shell Name：file_check 
+# Description：Check the integrity of the plugin file after the firmware upgrade.
+# Author：Starry
+# E-mail: starry@misstar.com
+# Time：2016-11-06 02:30 CST
+# Copyright © 2016 Misstar Tools. All rights reserved.
+#----------------------------------------------------------------*/
+
+mount -o remount,rw /
+rm -rf /usr/share/datacenter/文件共享说明.jpg >/dev/null 2>&1
+
+## Check The Router Hardware Model 
+model=$(cat /proc/xiaoqiang/model)
+
+if [ "$model" = "R1D" -o "$model" = "R2D" -o "$model" = "R3D" ];then
+	MIWIFIPATH="/etc/misstar"
+elif [ "$model" = "R3" -o "$model" == "R3P"  -o "$model" = "R3G" ];then
+	MIWIFIPATH="$(ls /etc/misstar/scripts/misstarini 2>/dev/null | sed 's/\/scripts\/misstarini//' | awk '{print;exit}')"
+	if [ -d "$MIWIFIPATH" ];then
+		MIWIFIPATH="/etc/misstar"
+	else
+		MIWIFIPATH="$(ls /extdisks/sd*/misstar/scripts/misstarini 2>/dev/null | sed 's/\/scripts\/misstarini//' | awk '{print;exit}')"
+		if [ ! -d "$MIWIFIPATH" ];then
+			echo "未找到插件目录，退出...";
+			return 1;
+		fi
+	fi
+elif [ "$model" = "R1CM" ];then
+	if [ $(df|grep -Ec '\/extdisks\/sd[a-z][0-9]?$') -eq 0 ];then
+		echo "未找到外置存储设备，退出..."
+		return 1
+	else
+		MIWIFIPATH="$(ls /extdisks/sd*/misstar/scripts/misstarini 2>/dev/null | sed 's/\/scripts\/misstarini//' | awk '{print;exit}')"
+		[ -z $MIWIFIPATH ] && {
+			echo "未找到插件目录，退出...";
+			return 1;
+		}
+	fi
+else
+        echo "暂不支持您的路由器。"
+        return 1
+fi
+
+if [ "$MIWIFIPATH" != "/etc/misstar" ]; then
+	rm -rf /etc/misstar
+	ln -s $MIWIFIPATH /etc/
+fi
+
+. /etc/misstar/scripts/MTbase
+
+LUAPATH="/usr/lib/lua/luci"
+MOUNTFILESPATH="/tmp/mountpath"
+WEBPATH="/www/xiaoqiang/web"
+
+umount -lf $LUAPATH 2>/dev/null
+umount -lf $WEBPATH 2>/dev/null
+
+rm -rf $MOUNTFILESPATH
+mkdir -p $MOUNTFILESPATH
+
+cp -rf $LUAPATH $MOUNTFILESPATH
+cp -rf $WEBPATH $MOUNTFILESPATH
+
+mount --bind $MOUNTFILESPATH/luci $LUAPATH
+mount --bind $MOUNTFILESPATH/web $WEBPATH
+
+ln -s /etc/misstar/luci $MOUNTFILESPATH/web
+
+ln -s /etc/misstar/applications/ /usr/lib/lua/luci/view/web/setting/ >/dev/null 2>&1
+ln -s /etc/misstar/misstar/ /usr/lib/lua/luci/view/web/setting/ >/dev/null 2>&1
+ln -s /etc/misstar/misstar/misstar.lua /usr/lib/lua/luci/controller/api/ >/dev/null 2>&1
+
+/etc/misstar/scripts/file_check
+
