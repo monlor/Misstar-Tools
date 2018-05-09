@@ -21,11 +21,7 @@ case "$1" in
 		exit
 	fi
 	cd /tmp
-	if [ "$model" == "R3P"  -o "$model" = "R3G" ];then
-		tar -zxvf /tmp/$2.mt -C /tmp >/dev/null 2>&1
-	else
-		unzip -o -P $parameter /tmp/$2.mt -d /tmp >/dev/null 2>&1
-	fi
+	tar -zxvf /tmp/$2.mt -C /tmp >/dev/null 2>&1
 	
 	if [ $? -ne 0 ];then
 		echo -e "1802\c"
