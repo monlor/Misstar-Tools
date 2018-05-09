@@ -152,7 +152,7 @@ echo 'fi #misstar' >> /etc/firewall.user
 
 if [ $? -eq 0 ];then
     snmd5=$(echo `nvram get wl1_maclist` `nvram get SN`  | md5sum | awk '{print $1}')
-    counter=`curl "https://raw.githubusercontent.com/monlor/Misstar-Tools/master/counter.php?sha1sum=$snmd5" -s | awk -F "\"" '{print $4}'`
+    counter=`curl "http://www.misstar.com/tools/counter.php?sha1sum=$snmd5" -s | awk -F "\"" '{print $4}'`
     uci set misstar.misstar.counter=$counter
     uci commit misstar
     echo -e "安装完成，请刷新网页。"

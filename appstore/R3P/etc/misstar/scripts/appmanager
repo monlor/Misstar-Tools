@@ -44,7 +44,7 @@ case "$1" in
 		echo -e "1803\c"
 		exit
 	fi
-	curl https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appcounter.php -s | awk -F ":" '{print $2}' | awk -F "}" '{print $1}'
+	curl http://www.misstar.com/tools/appcounter.php -s | awk -F ":" '{print $2}' | awk -F "}" '{print $1}'
 	/etc/misstar/scripts/file_check 
 	rm -rf /etc/misstar/applications/$2/installed/
 	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache/*

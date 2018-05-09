@@ -170,7 +170,7 @@ local model = luci.sys.exec("cat /proc/xiaoqiang/model")
 						form.render();
 					}, 100);
 					$.ajax({
-						url: "https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appstore/<%=model%>/applist.php",
+						url: "http://www.misstar.com/tools/appstore/<%=model%>/applist.php",
 						jsonp: 'callback',
 						dataType: 'jsonp',
 						data: 'rm',
