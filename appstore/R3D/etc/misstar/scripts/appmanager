@@ -15,7 +15,7 @@ model=$(cat /proc/xiaoqiang/model)
    
 case "$1" in
 "add")
-	wget http://www.misstar.com/tools/appstore/$model/$2.mt -O /tmp/$2.mt >/dev/null 2>&1
+	wget https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appstore/$model/$2.mt -O /tmp/$2.mt >/dev/null 2>&1
 	if [ $? -ne 0 ];then
 		echo -e "1801\c"
 		exit
@@ -44,7 +44,7 @@ case "$1" in
 		echo -e "1803\c"
 		exit
 	fi
-	curl http://www.misstar.com/tools/appcounter.php -s | awk -F ":" '{print $2}' | awk -F "}" '{print $1}'
+	curl https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appcounter.php -s | awk -F ":" '{print $2}' | awk -F "}" '{print $1}'
 	/etc/misstar/scripts/file_check 
 	rm -rf /etc/misstar/applications/$2/installed/
 	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache/*
@@ -57,7 +57,7 @@ case "$1" in
 	sed -i "/misstar-$2/d" /etc/misstar/scripts/file_check
 	sed -i "/misstar-$2/d" /etc/misstar/scripts/Monitor
 	
-	wget http://www.misstar.com/tools/appstore/$model/$2.mt -O /tmp/$2.mt >/dev/null 2>&1
+	wget https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appstore/$model/$2.mt -O /tmp/$2.mt >/dev/null 2>&1
 	if [ $? -ne 0 ];then
 		echo -e "1804\c"
 		exit

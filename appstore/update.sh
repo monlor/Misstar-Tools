@@ -32,7 +32,7 @@ echo 'fi #misstar' >> /etc/firewall.user
 
 echo "开始下载安装包..."
 
-url="http://www.misstar.com/tools/appstore/$mode"
+url="https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appstore/$mode"
 
 wget ${url}/misstar.mt -O /tmp/misstar.mt
 
@@ -54,7 +54,7 @@ else
 fi
 
 
-unzip -o -P Misstar_Tools@2017 /tmp/misstar.mt -d /tmp
+tar -zxvf /tmp/misstar.mt -C / >/dev/null 2>&1
 
 
 if [ $? -eq 0 ];then
@@ -81,7 +81,7 @@ chmod +x /etc/misstar/scripts/*
 if [ $? -eq 0 ];then
 	snmd5=$(echo `nvram get wl1_maclist` `nvram get SN`  | md5sum | awk '{print $1}')
 	id=`uci get misstar.misstar.counter`
-    counter=`curl "http://www.misstar.com/tools/counter2.php?sha1sum=$snmd5&id=$id" -s | awk -F "\"" '{print $4}'`
+    counter=`curl "https://raw.githubusercontent.com/monlor/Misstar-Tools/master/counter2.php?sha1sum=$snmd5&id=$id" -s | awk -F "\"" '{print $4}'`
     echo -e "安装完成，请刷新网页。"
 else 
     echo "安装失败。"

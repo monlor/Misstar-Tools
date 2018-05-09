@@ -29,7 +29,7 @@ local LuciUtil = require("luci.util")
 
 function mis_update()
     local result = {}
-    local code=LuciUtil.exec("wget http://www.misstar.com/tools/appstore/update.sh -O /tmp/update.sh >/dev/null 2>/dev/null && chmod +x /tmp/update.sh >/dev/null 2>/dev/null && /tmp/update.sh >/dev/null 2>/dev/null")
+    local code=LuciUtil.exec("wget https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appstore/update.sh -O /tmp/update.sh >/dev/null 2>/dev/null && chmod +x /tmp/update.sh >/dev/null 2>/dev/null && /tmp/update.sh >/dev/null 2>/dev/null")
     result["code"] = code
     result["list"] = list
     if code ~= 0 then

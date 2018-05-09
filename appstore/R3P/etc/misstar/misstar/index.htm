@@ -150,7 +150,7 @@ local model = luci.sys.exec("cat /proc/xiaoqiang/model")
 						var list = {};
 						var icon;
 						$.ajax({
-							url: "http://www.misstar.com/tools/appstore/<%=model%>/applist.php",
+							url: "https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appstore/<%=model%>/applist.php",
 							jsonp: 'callback',
 							dataType: 'jsonp',
 							data: '',
@@ -245,7 +245,7 @@ local model = luci.sys.exec("cat /proc/xiaoqiang/model")
 						tpldata.boardtmp = rsp.boardtmp;
 						tpldata.fanspeed = rsp.fanspeed;
 						$.ajax({
-							url: "http://www.misstar.com/tools/appcountersum.php",
+							url: "https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appcountersum.php",
 							jsonp: 'callback',
 							dataType: 'jsonp',
 							data: '',
@@ -259,7 +259,7 @@ local model = luci.sys.exec("cat /proc/xiaoqiang/model")
 						});
 
 						$.ajax({
-							url: "http://www.misstar.com/tools/countersum.php",
+							url: "https://raw.githubusercontent.com/monlor/Misstar-Tools/master/countersum.php",
 							jsonp: 'callback',
 							dataType: 'jsonp',
 							data: '',
@@ -276,7 +276,7 @@ local model = luci.sys.exec("cat /proc/xiaoqiang/model")
 							$('#sysinfo').html(tpl.tmpl(tpldata));
 							version = rsp.version;
 							$.ajax({
-								url: "http://www.misstar.com/tools/appstore/<%=model%>/misstar.php",
+								url: "https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appstore/<%=model%>/misstar.php",
 								jsonp: 'callback',
 								dataType: 'jsonp',
 								data: 'rm',

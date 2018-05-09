@@ -116,7 +116,7 @@ local model = luci.sys.exec("cat /proc/xiaoqiang/model")
 							var list = {};
 							var icon;
 							$.ajax({
-								url: "http://www.misstar.com/tools/appstore/<%=model%>/applist.php",
+								url: "https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appstore/<%=model%>/applist.php",
 								jsonp: 'callback',
 								dataType: 'jsonp',
 								data: '',
@@ -161,7 +161,7 @@ local model = luci.sys.exec("cat /proc/xiaoqiang/model")
 
 										for(var i = 0; i < list.length; i++) {
 											versionlog = list[i].versionlog;
-											icon = "http://www.misstar.com/tools/appstore/images/" + list[i].href + ".png";
+											icon = "https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appstore/images/" + list[i].href + ".png";
 											installed = 0;
 											upgradeenable = 0;
 											for(var j = 0; j < navs[0].children.length; j++) {

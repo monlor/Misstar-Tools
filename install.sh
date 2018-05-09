@@ -97,7 +97,7 @@ fi
 
 echo "开始下载安装包..."
 
-url="http://www.misstar.com/tools/appstore/$model"
+url="https://raw.githubusercontent.com/monlor/Misstar-Tools/master/appstore/$model"
 
 wget ${url}/misstar.mt -O /tmp/misstar.mt
 
@@ -119,11 +119,8 @@ fi
 
 echo "开始解压安装包..."
 
-if [ "$model" == "R3P" -o "$model" == "R3G" ];then
-	tar -zxvf /tmp/misstar.mt -C / >/dev/null 2>&1
-else
-	unzip -o -P Misstar_Tools@2017 /tmp/misstar.mt -d / >/dev/null 2>&1
-fi
+tar -zxvf /tmp/misstar.mt -C / >/dev/null 2>&1
+
 
 if [ $? -eq 0 ];then
     echo "解压完成，开始安装："
@@ -155,7 +152,7 @@ echo 'fi #misstar' >> /etc/firewall.user
 
 if [ $? -eq 0 ];then
     snmd5=$(echo `nvram get wl1_maclist` `nvram get SN`  | md5sum | awk '{print $1}')
-    counter=`curl "http://www.misstar.com/tools/counter.php?sha1sum=$snmd5" -s | awk -F "\"" '{print $4}'`
+    counter=`curl "https://raw.githubusercontent.com/monlor/Misstar-Tools/master/counter.php?sha1sum=$snmd5" -s | awk -F "\"" '{print $4}'`
     uci set misstar.misstar.counter=$counter
     uci commit misstar
     echo -e "安装完成，请刷新网页。"
